@@ -1,0 +1,402 @@
+﻿@{
+    ViewBag.Title = "Teacher";
+}
+
+<h2>@ViewBag.Title.</h2>
+<h3>@ViewBag.Message</h3>
+@section Scripts {
+    @Scripts.Render("~/bundles/datatable")
+    @Scripts.Render("~/bundles/jquery-ui")
+}
+<script>
+    var _studentsJSONObjs;
+    var _studentApplyJSONObjs;
+    var _studentApplyHistoryJSONObjs;
+    var _studentChangeJSONObjs;
+    var _studentChangeHistoryJSONObjs;
+    var tableStudent, tableApply, tableChange, tableApplyHistory, tableChangeHistory;
+    $(document).ready(function () {
+        //initialize datatabke
+        tableStudent = $('#tableStudent').DataTable({ searching: false, paging: false, "bInfo": false });
+        tableApply = $('#tableApply').DataTable({ searching: false, paging: false, "bInfo": false });
+        tableChange = $('#tableChange').DataTable({ searching: false, paging: false, "bInfo": false });
+        tableApplyHistory = $('#tableApplyHistory').DataTable({ searching: false, paging: false, "bInfo": false });
+        tableChangeHistory = $('#tableChangeHistory').DataTable({ searching: false, paging: false, "bInfo": false });
+
+        getStudent();
+        getStudentApply();
+        getStudentChange();
+        getStudentApplyHistory();
+        getStudentChangeHistory();
+
+    });
+    function loadStudentTable() {
+        //clear table every time
+        tableStudent.clear().draw();
+        for (var i in _studentsJSONObjs) {
+            tableStudent.row.add([
+                _studentsJSONObjs[i]['s_id'],
+                _studentsJSONObjs[i]['s_name'],
+                getGrade(_studentsJSONObjs[i]['s_id']),
+                _studentsJSONObjs[i]['whole_teacher'],
+                _studentsJSONObjs[i]['s_state']=0?'休學':'在學',
+            ]);
+        }
+        tableStudent.draw();
+    }
+    function loadStudentApplyTable() {
+        //clear table every time
+        tableApply.clear().draw();
+        for (var i in _studentApplyJSONObjs) {
+            if (_studentApplyJSONObjs[i]["allapprove"] == 0)
+                var _opHtml = '<button type="button" onclick=\'acceptApply("' + _studentApplyJSONObjs[i]['sa_tg_id'] + '","' + _studentApplyJSONObjs[i]['sa_s_id'] 
+                    + '",1)\'>同意</button> <button type="button"onclick=\'acceptApply("' + _studentApplyJSONObjs[i]['sa_tg_id'] + '","' + _studentApplyJSONObjs[i]['sa_s_id']  + '",2)\'>拒絕</button>';
+            else
+                var _opHtml = "等待其他老師同意中";
+            tableApply.row.add([
+                'X學年度',
+                _studentApplyJSONObjs[i]['sa_s_id'],
+                _studentApplyJSONObjs[i]['s_name'],
+                getGrade(_studentApplyJSONObjs[i]['sa_s_id']),
+                _studentApplyJSONObjs[i]['hsa_create_datetime'],
+                _opHtml
+            ]);
+            tableApply.draw();
+        }
+    } 
+    function loadStudentChangeTable() {
+        //clear table every time
+        tableChange.clear().draw();
+        for (var i in _studentChangeJSONObjs) {
+            console.log(_studentChangeJSONObjs[i]);
+            //原本老師還沒全部同意
+            if (_studentChangeJSONObjs[i]["sc_all_approval"] == '0') {
+                if (_studentChangeJSONObjs[i]["scota_state"] == '0')
+                    //sc_id, s_id, t_id, scota_thesis_state, sc_allapproval, accept
+                    var _opHtml = '<button type="button" onclick=\'acceptChange("'
+                        + _studentChangeJSONObjs[i]['sc_id']
+                        + '","'+ _studentChangeJSONObjs[i]['hsc_origin_tg_id']
+                        + '","' + _studentChangeJSONObjs[i]['sc_s_id']
+                        + '","' + _studentChangeJSONObjs[i]['scota_t_id']
+                        + '","' + _studentChangeJSONObjs[i]['sc_all_approval']
+                        + '",1)\'>同意</button>'
+                        + ' <button type="button"onclick=\'acceptChange("'
+                        + _studentChangeJSONObjs[i]['sc_id']
+                        + '","' + _studentChangeJSONObjs[i]['hsc_origin_tg_id']
+                        + '","' + _studentChangeJSONObjs[i]['sc_s_id']
+                        + '","' + _studentChangeJSONObjs[i]['scota_t_id']
+                        + '","' + _studentChangeJSONObjs[i]['sc_all_approval']
+                        + '",2)\'>拒絕</button>';
+                else
+                    var _opHtml = "等待其他老師同意中";    
+            }
+            //原本老師已經都同意，讓新老師操作
+            else {
+                if (_studentChangeJSONObjs[i]["scota_state"] == "")
+                    var _opHtml = '<button type="button" onclick=\'acceptChange("'
+                        + _studentChangeJSONObjs[i]['sc_id']
+                        + '","' + _studentChangeJSONObjs[i]['hsc_origin_tg_id']
+                        + '","' + _studentChangeJSONObjs[i]['sc_s_id']
+                        + '","' + _studentChangeJSONObjs[i]['sc_t_id']
+                        + '","' + _studentChangeJSONObjs[i]['sc_all_approval']
+                        + '",1)\'>同意</button>'
+                        + ' <button type="button"onclick=\'acceptChange("'
+                        + _studentChangeJSONObjs[i]['sc_id']
+                        + '","' + _studentChangeJSONObjs[i]['hsc_origin_tg_id']
+                        + '","' + _studentChangeJSONObjs[i]['sc_s_id']
+                        + '","' + _studentChangeJSONObjs[i]['sc_t_id']
+                        + '","' + _studentChangeJSONObjs[i]['sc_all_approval']
+                        + '",2)\'>拒絕</button>';
+                else
+                    _opHtml = '等待其他老師同意中';
+            }
+            tableChange.row.add([
+                'X學年度',
+                _studentChangeJSONObjs[i]['sc_s_id'],
+                _studentChangeJSONObjs[i]['s_name'],
+                getGrade(_studentChangeJSONObjs[i]['sc_s_id']),
+                _studentChangeJSONObjs[i]['hsc_create_datetime'],
+                _studentChangeJSONObjs[i]['org_teacher'],
+                _studentChangeJSONObjs[i]['new_teacher'],
+                _opHtml
+            ]);
+            tableChange.draw();
+        }
+    }
+    function loadApplyHistoryTable() {
+        tableApplyHistory.clear().draw();
+        for (var i in _studentApplyHistoryJSONObjs) {
+            tableApplyHistory.row.add([
+                _studentApplyHistoryJSONObjs[i]['s_id'],
+                _studentApplyHistoryJSONObjs[i]['s_name'],
+                _studentApplyHistoryJSONObjs[i]['Apply_teacher'],
+                _studentApplyHistoryJSONObjs[i]['hsa_create_datetime'],
+                _studentApplyHistoryJSONObjs[i]['hsa_end_datetime'],
+                _studentApplyHistoryJSONObjs[i]['hsa_state']==0?'失敗':'成功'
+            ]);
+            tableApplyHistory.draw();
+        }
+    }
+    function loadChangeHistoryTable() {
+        tableChangeHistory.clear().draw();
+        console.log(_studentChangeHistoryJSONObjs);
+        for (var i in _studentChangeHistoryJSONObjs) {
+            console.log(_studentChangeHistoryJSONObjs[i]['hsc_create_datetime']);
+            tableChangeHistory.row.add([
+                _studentChangeHistoryJSONObjs[i]['p_s_id'],
+                _studentChangeHistoryJSONObjs[i]['s_name'],
+                _studentChangeHistoryJSONObjs[i]['org_teacher'],
+                _studentChangeHistoryJSONObjs[i]['new_teacher'],
+                _studentChangeHistoryJSONObjs[i]['hsc_create_datetime'],
+                _studentChangeHistoryJSONObjs[i]['hsc_end_datetime'],
+                _studentChangeHistoryJSONObjs[i]['hsc_state'] == 0 ? '失敗' : '成功'
+            ]);
+            tableChangeHistory.draw();
+        }
+    }
+    function getGrade(sid) {
+        var degree;
+        var semester;
+        semester = 107;
+        switch(sid.substring(0, 1).toLowerCase()){
+            case 'm':
+                degree = '碩';
+                break;
+            case 'd':
+                degree = '博';
+                break;
+            case 'P':
+                degree = '在職碩'
+            break;
+        }
+        degree += (semester - sid.substring(1, 4));
+        return degree;
+    }
+    function getStudent() {
+        $.ajax({
+            type: "GET",
+            url: "/teacher/GetStudent",
+            data: null,
+            dataType: "json",
+            success: function (data) {
+                _studentsJSONObjs = data;
+                loadStudentTable();
+            }
+        })
+    }
+    function getStudentApply() {
+        $.ajax({
+            type: "GET",
+            url: "/teacher/GetStudentApply",
+            data: null,
+            dataType: "json",
+            success: function(data){
+                _studentApplyJSONObjs = data;
+                loadStudentApplyTable();
+            }
+        })
+    }
+    function getStudentChange() {
+        $.ajax({
+            type: "GET",
+            url: "/teacher/GetStudentChange",
+            data: null,
+            dataType: "json",
+            success: function (data) {
+                _studentChangeJSONObjs = data;
+                loadStudentChangeTable();
+            }
+        })
+    }
+    function acceptApply(tg_id, s_id, accept) {
+        var data = {
+            "tg_id": tg_id,
+            "s_id": s_id,
+            "accept" : accept
+        }
+
+        $("#dialog-acceptApply").dialog({
+            resizable: false,
+            height: "auto",
+            width: 400,
+            modal: true,
+            buttons: {
+                "確定": function () {
+                    $(this).dialog("close");
+                    $.ajax({
+                        type: "POST",
+                        url: "/teacher/UpdateStudentApply",
+                        data: data,
+                        dataType: "json",
+                        success: function (data) {
+                            console.log(data);
+                            getStudentApply();
+                            getStudent();
+                            getStudentApplyHistory();
+                        }
+                    })
+                },
+                "取消": function () {
+                    data.thesis_state = 2;
+                    $(this).dialog("close");
+                }
+            }
+        });
+        
+        
+    }
+    function acceptChange(sc_id, org_tg_id, s_id, t_id, sc_allapproval, accept) {
+        var data = {
+            "sc_id": sc_id,
+            "org_tg_id": org_tg_id,
+            "s_id": s_id,
+            "t_id": t_id,
+            "thesis_state": 1,
+            "sc_allapproval": sc_allapproval,
+            "accept": accept
+        }
+        console.log("data");
+        console.log(data);
+        $("#dialog-acceptChange").dialog({
+            resizable: false,
+            height: "auto",
+            width: 400,
+            modal: true,
+            buttons: {
+                "同意": function () {
+                    $(this).dialog("close");
+                    UpdateStudentChange(data);
+                },
+                "不同意": function () {
+                    data.thesis_state = 2;
+                    $(this).dialog("close");
+                    UpdateStudentChange(data);                    
+                }
+            }
+        });
+    }
+    function UpdateStudentChange(data) {
+        $.ajax({
+            type: "POST",
+            url: "/teacher/UpdateStudentChange",
+            data: data,
+            dataType: "json",
+            success: function (data) {
+                console.log(data);
+                getStudentChange();
+                getStudent();
+            }
+        })
+    }
+
+    function getStudentApplyHistory() {
+        $.ajax({
+            type: "GET",
+            url: "/teacher/GetApplyHistory",
+            data: null,
+            dataType: "json",
+            success: function (data) {
+                _studentApplyHistoryJSONObjs = data;
+                loadApplyHistoryTable();
+            }
+        })
+    }
+    function getStudentChangeHistory(){
+        $.ajax({
+            type: "GET",
+            url: "/teacher/GetChangeHistory",
+            data: null,
+            dataType: "json",
+            success: function (data) {
+                _studentChangeHistoryJSONObjs = data;
+                loadChangeHistoryTable();
+            }
+        })    
+    }
+
+
+
+</script>
+<div id="dialog-acceptApply" title="同意申請" hidden>
+    <p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>同意該學生為指導學生</p>
+</div>
+<div id="dialog-acceptChange" title="確認共同指導" hidden>
+    <p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>是否准予使用共同之研究內容及成果，當作 學位論文之主體</p>
+</div>
+<div><h3>指導學生</h3></div>
+<table id="tableStudent" class="display" cellspacing="0" width="100%">
+    <thead>
+        <tr>
+            <th>學號</th>
+            <th>學生姓名</th>
+            <th>年級</th>
+            <th>共同指道教授</th>
+            <th>狀態</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+<br>
+<div><h3>申請審核</h3></div>
+<table id="tableApply" class="display" cellspacing="0" width="100%">
+    <thead>
+        <tr>
+            <th>學年度</th>
+            <th>學號</th>
+            <th>名字</th>
+            <th>年級</th>
+            <th>申請時間</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<br>
+<div><h3>異動審核</h3></div>
+<table id="tableChange" class="display" cellspacing="0" width="100%">
+    <thead>
+        <tr>
+            <th>學年度</th>
+            <th>學號</th>
+            <th>名字</th>
+            <th>年級</th>
+            <th>申請時間</th>
+            <th>原始教授</th>
+            <th>異動後教授</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<br>
+<div><h3>申請紀錄</h3></div>
+<table id="tableApplyHistory" class="display" cellspacing="0" width="100%">
+    <thead>
+        <tr>
+            <th>學生學號</th>
+            <th>學生姓名</th>
+            <th>申請教授</th>
+            <th>申請時間</th>
+            <th>完成時間</th>
+            <th>結果</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<br>
+<div><h3>異動紀錄</h3></div>
+<table id="tableChangeHistory" class="display" cellspacing="0" width="100%">
+    <thead>
+        <tr>
+            <th>學生學號</th>
+            <th>學生姓名</th>
+            <th>原始教授</th>
+            <th>異動後教授</th>
+            <th>申請時間</th>
+            <th>完成時間</th>
+            <th>結果</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>

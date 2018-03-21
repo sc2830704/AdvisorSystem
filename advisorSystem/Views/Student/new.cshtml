@@ -1,0 +1,326 @@
+﻿@{
+    ViewBag.Title = "碩博士生指導教授申請";
+}
+<h2>@ViewBag.Title</h2>
+<h3>
+    <span>姓名: @ViewBag.studentInfo.s_name</span>
+    <span>系所: @ViewBag.studentInfo.chinesDepart</span>
+    <span>學號: @ViewBag.studentId</span>
+</h3>
+
+<div>
+    <span>主要指導教授</span>
+    <span>@ViewBag.studentInfo.chinesDepart</span>
+    <span>@Html.DropDownList("mainTeacherListItem")</span>
+</div>
+
+<div>
+    <span>次要指導教授</span>
+    <span>@Html.DropDownList("departmentListItem")</span>
+    <span>
+        <select class="subTeacher" t_type="1">
+            <option disabled="disabled" selected="selected">選擇指導教授</option>
+        </select>
+    </span>
+    <span>
+        <select class="" t_type="2" style="display:none;">
+            <option disabled="disabled" selected="selected">選擇指導教授</option>
+        </select>
+    </span>
+    <span>
+	    <button id="dialog-link" class="ui-button ui-corner-all ui-widget">
+		    <span class="ui-icon ui-icon-newwin"></span> ? 
+	    </button>
+    </span>
+</div>
+<div>
+    <span>次要指導教授</span>
+    <span>@Html.DropDownList("departmentListItem")</span>
+    <span>
+        <select class="subTeacher" t_type="1">
+            <option disabled="disabled" selected="selected">選擇指導教授</option>
+        </select>
+    </span>
+    <span>
+        <select class="" t_type="2" style="display:none;">
+            <option disabled="disabled" selected="selected">選擇指導教授</option>
+        </select>
+    </span>
+</div>
+<div>
+    <span>次要指導教授</span>
+    <span>@Html.DropDownList("departmentListItem")</span>
+    <span>
+        <select class="subTeacher" t_type="1">
+            <option disabled="disabled" selected="selected">選擇指導教授</option>
+        </select>
+    </span>
+    <span>
+        <select class="" t_type="2" style="display:none;">
+            <option disabled="disabled" selected="selected">選擇指導教授</option>
+        </select>
+    </span>
+</div>
+
+<!-- ui-dialog -->
+<div id="dialogForAddExtra" title="新增校外指導老師">
+	<p></p>
+</div>
+<div id="dialogForApply" title="申請指導老師">
+    <div>
+	    <span>主要指導教授: </span>
+	    <span></span>
+    </div>
+    <div>
+	    <span>次要指導教授: </span>
+	    <span></span>
+    </div>
+    <div>
+	    <span>次要指導教授: </span>
+	    <span></span>
+    </div>
+    <div>
+	    <span>次要指導教授: </span>
+	    <span></span>
+    </div>
+</div>
+<div id="dialogForChangeApply" title="修改指導老師">
+    <div>
+	    <span>主要指導教授: </span>
+	    <span></span>
+    </div>
+    <div>
+	    <span>次要指導教授: </span>
+	    <span></span>
+    </div>
+    <div>
+	    <span>次要指導教授: </span>
+	    <span></span>
+    </div>
+    <div>
+	    <span>次要指導教授: </span>
+	    <span></span>
+    </div>
+</div>
+
+<table id="example" class="dataTable display" width="100%" cellspacing="0">
+    <thead>
+        <tr>
+            <th>教授</th>
+            <th>結果</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<button id="btnSendApply" class="ui-button">
+	送出申請
+</button>
+
+
+<script type="text/javascript">
+        var teacherList = @(Html.Raw(Json.Encode(ViewBag.teacherList)));
+        $.teacherList = JSON.parse(teacherList);
+        var departmentList = @(Html.Raw(Json.Encode(ViewBag.departmentList)));
+        $.departmentList = JSON.parse(departmentList);
+        var outSideTeacherUnit = @(Html.Raw(Json.Encode(ViewBag.outSideTeacherUnit)));
+        $.outSideTeacherUnit = JSON.parse(outSideTeacherUnit);
+        var ousSideTeacherList = @(Html.Raw(Json.Encode(ViewBag.ousSideTeacherList)));
+        $.ousSideTeacherList = JSON.parse(ousSideTeacherList);
+        
+        var applyResult = @(Html.Raw(Json.Encode(ViewBag.applyResult)));
+        $.applyResult = JSON.parse(applyResult);
+        
+        
+        console.log($.teacherList);
+        console.log($.departmentList);
+        console.log($.outSideTeacherUnit);
+        console.log($.ousSideTeacherList);
+
+        //$.each($.teacherList)
+        
+        $("[id=departmentListItem]").bind("change",function(){
+            var val = $(this).val();
+            var nextSelectTag = $(this).parent().next().find("select");
+            var next2SelectTag = $(this).parent().next().next().find("select");
+            if(val=="0"){
+                var html='<option disabled="disabled" selected="selected">選擇單位</option>';
+                $.each($.outSideTeacherUnit,function(k,v){
+                    html += '<option value="'+v.t_service_units+'">'+v.t_service_units+'</option>';
+                });
+                console.log(111)
+                nextSelectTag.bind("change",outSideTeacherUnitEvent);
+                console.log(222)
+                nextSelectTag.removeClass("subTeacher");
+                console.log(333)
+                next2SelectTag.addClass("subTeacher").show();
+            }    
+            else{
+                var html='<option disabled="disabled" selected="selected">選擇指導教授</option>';
+                $.each($.teacherList,function(k,v){
+                    if(v.t_department==val)
+                        html += '<option value="'+v.t_id+'">'+v.t_name+'</option>';
+                });
+                nextSelectTag.unbind("change");
+                nextSelectTag.addClass("subTeacher");
+                next2SelectTag.removeClass("subTeacher").hide();
+            }
+            nextSelectTag.html(html);
+        });
+
+        function outSideTeacherUnitEvent(){
+            var html='<option disabled="disabled" selected="selected">選擇指導教授</option>';
+            console.log(1)
+            var val = $(this).val();
+            console.log(2)
+            var nextSelectTag = $(this).parent().next().find("select");
+            console.log(3)
+            $.each($.ousSideTeacherList,function(k,v){
+                if(v.t_service_units==val)
+                    html += '<option value="'+v.t_id+'">'+v.t_name+'</option>';
+            });
+            console.log(4)
+            nextSelectTag.html(html);
+        }
+        
+        $("#example").DataTable().destroy();
+        var html="",result;
+        $.each($.applyResult,function(k,v){
+            if(v.sa_state=="0")
+                result = "待審核";
+            else if(v.sa_state=="1")
+                result = "已同意";
+            else
+                result = "拒絕";
+            html += '<tr>\n\
+                        <td>'+v.t_name+'</td>\n\
+                        <td>'+result+'</td>\n\
+                    </tr>';
+        });
+        $('#example tbody').html(html);
+              
+        $('#example').DataTable( {       
+            "order": [[ 1, "desc" ]],
+            "dom": 'tp',
+            "pagingType": 'numbers',
+            "paging":   false,
+            "ordering": false,
+            "info":     false
+        });
+        
+        if($.applyResult.length!==0){
+            $("#btnSendApply").html("變更申請").bind("click",function(){
+                if($("#mainTeacherListItem").val()===null){
+                    alert("請選擇主要指導老師")
+                    return false;
+                }
+                $( "#dialogForChangeApply" ).children("div").eq(0).children("span").eq(1).html($("#mainTeacherListItem").find(":selected").text());
+                $( "#dialogForChangeApply" ).children("div:gt(0)").hide();
+                var i=0;
+                $.each($(".subTeacher"),function(k,v){
+                    if($(v).val()!==null){
+                        $( "#dialogForChangeApply" ).children("div:gt(0)").eq(i).show();
+                        $( "#dialogForChangeApply" ).children("div:gt(0)").eq(i).children("span").eq(1).html($(v).find(":selected").text());
+                        i++;
+                    }
+                });
+                
+	            $( "#dialogForChangeApply" ).dialog( "open" );
+            });
+        }
+        else{
+            $("#btnSendApply").bind("click",function(){
+                if($("#mainTeacherListItem").val()===null){
+                    alert("請選擇主要指導老師")
+                    return false;
+                }
+                $( "#dialogForApply" ).children("div").eq(0).children("span").eq(1).html($("#mainTeacherListItem").find(":selected").text());
+                $( "#dialogForApply" ).children("div:gt(0)").hide();
+                var i=0;
+                $.each($(".subTeacher"),function(k,v){
+                    if($(v).val()!==null){
+                        $( "#dialogForApply" ).children("div:gt(0)").eq(i).show();
+                        $( "#dialogForApply" ).children("div:gt(0)").eq(i).children("span").eq(1).html($(v).find(":selected").text());
+                        i++;
+                    }
+                });
+                
+                
+	            $( "#dialogForApply" ).dialog( "open" );
+            });
+        }
+        
+        $( "#dialogForApply,#dialogForChangeApply" ).dialog({
+	        autoOpen: false,
+	        width: 400,
+	        buttons: [
+		        {
+			        text: "Ok",
+			        click: function() {
+                        var subTeacher = [], infoObj;
+                        $.each($(".subTeacher"),function(k,v){
+                            if($(v).val()!==null){
+                                infoObj={"t_id":$(v).val(), "t_type": $(v).attr("t_type")};
+                                subTeacher[subTeacher.length] = infoObj;
+                            }
+                        });
+                        $.ajax({
+                            type:"POST",
+                            dataType: "text",
+                            url: "/Student/StudentApply",
+                            data: {
+                                main: $("#mainTeacherListItem").val() ,
+                                sub: JSON.stringify(subTeacher)
+                            },
+                            success: function(data){
+                                console.log(data);
+                                data = JSON.parse(data);
+                                if( data.status ) {
+                                        alert( "申請成功，請等待教授確認" );
+                                        location.reload();
+                                }
+                                else {
+                                        alert( data.msg );
+                                }
+                            }
+                        });
+				        $( this ).dialog( "close" );
+			        }
+		        },
+		        {
+			        text: "Cancel",
+			        click: function() {
+				        $( this ).dialog( "close" );
+			        }
+		        }
+	        ]
+        });
+
+
+		// Link to open the dialog
+		$( "#dialog-link" ).click(function( event ) {
+	        $( "#dialogForAddExtra" ).dialog( "open" );
+	        event.preventDefault();
+        });
+        
+        $( "#dialogForAddExtra" ).dialog({
+	        autoOpen: false,
+	        width: 400,
+	        buttons: [
+		        {
+			        text: "Ok",
+			        click: function() {
+				        $( this ).dialog( "close" );
+			        }
+		        },
+		        {
+			        text: "Cancel",
+			        click: function() {
+				        $( this ).dialog( "close" );
+			        }
+		        }
+	        ]
+        });
+        
+</script>

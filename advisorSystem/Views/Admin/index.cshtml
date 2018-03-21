@@ -1,0 +1,67 @@
+﻿@{
+    ViewBag.Title = "Admin";
+}
+<h2>@ViewBag.Title.</h2>
+<h3>@ViewBag.Message</h3>
+@section Scripts {
+    @Scripts.Render("~/bundles/datatable")
+    @Scripts.Render("~/bundles/jquery-ui")
+}
+<script>
+    var tableStudent;
+    $(document).ready(function () {
+        //initialize datatabke
+        generatorTable([{ semester: '105' }, { semester: '106' }]);
+        loadStudentTable();
+
+
+
+    });
+    function getStudentList(depart) {
+        $.ajax({
+            type: "GET",
+            url: "/admin/GetStudentList/depart",
+            data: null,
+            dataType: "json",
+            success: function (data) {
+                generatorTable(data);
+            }
+        })
+    }
+    function generatorTable(data) {
+        console.log(data);
+        var column = [
+            { title: "碩博士生一覽表" },
+            { title: "博士班" },
+            { title: "在職" },
+            { title: "異動紀錄." }
+        ];
+        for (var i in data) {
+            var semester = data[i]['semester'];
+            column.splice(2, 0, { title: semester });
+        }
+        console.log(column);
+        tableStudent = $("#table").DataTable({
+            columns: column
+        });
+    }
+    function loadStudentTable() {
+        tableStudent.clear().draw();
+        $.ajax({
+            type: "GET",
+            url: "/teacher/GetStudentList/depart",
+            data: null,
+            dataType: "json",
+            success: function (data) {
+                generatorTable(data);
+            }
+        })
+    }
+
+</script>
+<h3>
+    <span>碩博士生一覽表</span>
+    <span>系所: @ViewBag.Depart</span>
+    <span>學號: @ViewBag.User</span>
+</h3>
+<table id="table"></table>
