@@ -116,7 +116,7 @@ namespace advisorSystem.lib
             returnValue = sqlHelper.select("[ntust].[student_apply] sa"
                                     + " LEFT JOIN [ntust].[teacher] t on sa.sa_t_id=t.t_id AND sa.sa_t_type=1"
                                     + " LEFT JOIN [ntust].[extra_teacher] et on sa.sa_t_id=et.t_id AND sa.sa_t_type=2", condi
-                                    , select: "(Case when t.t_name IS NULL then et.t_name else t.t_name End) tname, (Case when t.t_id IS NULL then et.t_id else t.t_id End) tid, sa.sa_state status, sa.sa_id, sa.sa_t_type t_type");
+                                    , select: "(Case when t.t_name IS NULL then et.t_name else t.t_name End) tname, (Case when t.t_id IS NULL then et.t_id else t.t_id End) tid, sa.sa_state status, sa.sa_id, sa.sa_tg_id, sa.sa_t_type t_type");
             if ((bool)returnValue["status"])
             {
                 return returnValue["data"];
