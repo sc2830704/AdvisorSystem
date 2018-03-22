@@ -637,7 +637,7 @@ namespace advisorSystem.lib
 
     public class SQLHelper
     {
-        public static string connString = System.Configuration.ConfigurationManager.ConnectionStrings["RaymondConnection"].ToString();
+        public static string connString = System.Configuration.ConfigurationManager.ConnectionStrings["DefaultConnection"].ToString();
 
         public SqlConnection cn;
 

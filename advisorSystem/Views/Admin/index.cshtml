@@ -129,6 +129,7 @@
                 getStudnetClickEvent(_studentListJSONObjs[i]['phd']),
                 getStudnetClickEvent(_studentListJSONObjs[i]['pt_m'])
             ];
+
             //process master student column data and add to row data
             for (var c in studnetSemester) {
                 var semester = studnetSemester[c];
@@ -171,14 +172,16 @@
                 for (var i in apply) {
                     var tname = apply[i]['tname'];
                     var status = apply[i]['status'];
-                    var tg_id = apply[i]['tg_id'];
+                    var tg_id = apply[i]['sa_tg_id'];
+                    var tid = apply[i]['tid'];
                     var text = '';
-                    if (status == 0)
+                    console.log(apply[i]);
+                    if (status == "1")
                         text = '等待請他老師確認';
                     else
-                        text = '<button onClick="acceptApply("' + tg_id + '","' +sid
-                            + '"1)">同意</button> <button onClick="acceptApply("' + tg_id + '","' + sid
-                            + '"0)">不同意</button>'
+                        text = '<button onClick=\'acceptApply("' + tg_id + '","' + sid + '","' + tid
+                            + '",1)\'>同意</button> <button onClick=\'acceptApply("' + tg_id + '","' + sid
+                            + '",0)\'>不同意</button>'
                     html += tname +"   "+ text+"</br>";
                 }
                 $("#apply").html(html);
@@ -196,13 +199,13 @@
                     else
                         text = '<button onClick="acceptChange('
                             + '"' + 'null'
-                            + '","' + olds[i]['tg_id']
+                            + '","' + olds[i]['sa_tg_id']
                             + '","' + sid
                             + '","' + tid
                             + '","' + sc_allapproval + '1)">同意</button>' +
                             ' <button onClick="acceptChange('
                             + '"' + 'null'
-                            + '","' + olds[i]['tg_id']
+                            + '","' + olds[i]['sa_tg_id']
                             + '","' + sid
                             + '","' + tid
                             + '","' + sc_allapproval + '0)">不同意</button>'
@@ -212,10 +215,21 @@
                     var tname = news[i]['tname'];
                     var status = news[i]['status'];
                     var text = '';
-                    if (status == 1)
-                        text = '等待請他老師確認';
+                    if (status == "1")
+                        text = '等待其他老師確認';
                     else
-                        text = '<button onClick="acceptChange(1)">同意</button> <button onClick="acceptChange(0)">不同意</button>'
+                        text = '<button onClick="acceptChange('
+                            + '"' + news[i]['sc_id']
+                            + '","' + 'null'
+                            + '","' + sid
+                            + '","' + tid
+                            + '","' + sc_allapproval + '1)">同意</button>' +
+                            ' <button onClick="acceptChange('
+                            + '"' + news[i]['sc_id']
+                            + '","' + 'null'
+                            + '","' + sid
+                            + '","' + tid
+                            + '","' + sc_allapproval + '0)">不同意</button>'
                     html += tname + text + "</br>" ;
                 }
                 
@@ -228,9 +242,10 @@
 
 
     }
-    function acceptApply(tg_id, s_id,state){
+    function acceptApply(tg_id, s_id, t_id , accept) {
         var data = {
             "tg_id": tg_id,
+            "t_id": t_id,
             "s_id": s_id,
             "accept": accept
         }
@@ -242,17 +257,16 @@
             modal: true,
             buttons: {
                 "確定": function () {
+                    $("#teacher").text(t_id);
                     $(this).dialog("close");
                     $.ajax({
                         type: "POST",
-                        url: "/teacher/UpdateStudentApply",
+                        url: "/admin/UpdateStudentApply",
                         data: data,
                         dataType: "json",
                         success: function (data) {
                             console.log(data);
-                            getStudentApply();
-                            getStudent();
-                            getStudentApplyHistory();
+                            loadStudentInfo(s_id);
                         }
                     })
                 },
@@ -447,6 +461,7 @@
     <div id="change">    </div>
 </div>
 
+
 <!-- ui-dialog -->
 <div id="dialogForChange" title="指導教授變更申請">
 	    <div>注意事項</div>
@@ -535,4 +550,10 @@
             </div>
         </span>
     </div>
+</div>
+
+<div id="dialog-acceptApply" title="同意申請" hidden>
+    <p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;">
+        </span>同意<a id="teacher"></a>為該學生之指導學生
+    </p>
 </div>

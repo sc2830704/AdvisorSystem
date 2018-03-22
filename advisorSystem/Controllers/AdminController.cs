@@ -207,9 +207,37 @@ namespace advisorSystem.Controllers
             return RedirectToAction("Index", "Home");
 
         }
+        public String UpdateStudentApply(String tg_id, String t_id, String s_id, int accept)
+        {
+            getRoleInfo();
+            JObject update_apply = adminHelper.UpdateApply(tg_id, t_id, adminId, accept);
+
+            //check if all teacher agree for application, 
+            /* CheckAllApply get 0 means all student apply in accept */
+            if (adminHelper.CheckAllApply(tg_id) == 0)
+            {
+                //add new pair
+                adminHelper.AddApplyPair(tg_id, s_id);
+                //update student apply history
+                adminHelper.UpdateStudentApplyHistory(tg_id, state: 1); //state=1 means success
+            }
+            else
+            {
+                //全部都完成了，而且有老師拒絕
+                //check if all teacher are check and there's rejection to apply
+                //todo - update history student apply (state and ...?)
+                //remove - 
+            }
+
+            return update_apply["status"].ToString(Formatting.None);
+            //if ((bool)change["status"])
+            //    return change["status"].ToString(Formatting.None);
+            //else
+            //    return change["msg"].ToString();
+        }
         public String UpdateStudentChange(String sc_id, String org_tg_id, String s_id, String t_id, String thesis_state, String sc_allapproval, int accept)
         {
-
+            getRoleInfo();
             ////update teacher accpet according to allapprove
             //JObject update_change = adminHelper.UpdateChange(sc_id, s_id, t_id, thesis_state, sc_allapproval, accept);
 
@@ -238,7 +266,6 @@ namespace advisorSystem.Controllers
             //return update_change["status"].ToString(Formatting.None);
             return null;
         }
-
         #endregion
     }
 }

@@ -104,6 +104,8 @@ namespace advisorSystem.Controllers
                 teacherHelper.AddApplyPair(tg_id, s_id);
                 //update student apply history
                 teacherHelper.UpdateStudentApplyHistory(tg_id, state:1); //state=1 means success
+                //update student apply status
+                teacherHelper.UpdateStudentApplyStatus(s_id, state: 0); //state=0 means success
             }
             else
             {
@@ -144,6 +146,8 @@ namespace advisorSystem.Controllers
                 teacherHelper.AddChangePair(sc_id, s_id);
                 //update student change history
                 teacherHelper.UpdateStudentChangeHistory(org_tg_id, state:1); //state=1 means success
+                //update student apply status
+                teacherHelper.UpdateStudentApplyStatus(s_id, state: 0); //state=0 means success
             }
             //todo - remove student_change - another query to check is all change checked
             
@@ -161,7 +165,7 @@ namespace advisorSystem.Controllers
         }
         public String GetChangeHistory()
         {
-            tid = User.Identity.GetUserId();
+            getRoleInfo();
             JObject changeHistory = teacherHelper.GetChangeHistory();
             if ((bool)changeHistory["status"])
                 return changeHistory["data"].ToString(Formatting.None);
