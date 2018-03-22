@@ -72,6 +72,7 @@
                 getStudnetClickEvent(_studentListJSONObjs[i]['phd']),
                 getStudnetClickEvent(_studentListJSONObjs[i]['pt_m'])
             ];
+
             //process master student column data and add to row data
             for (var c in studnetSemester) {
                 var semester = studnetSemester[c];
@@ -138,13 +139,13 @@
                     else
                         text = '<button onClick="acceptChange('
                             + '"' + 'null'
-                            + '","' + olds[i]['tg_id']
+                            + '","' + olds[i]['sa_tg_id']
                             + '","' + sid
                             + '","' + tid
                             + '","' + sc_allapproval + '1)">同意</button>' +
                             ' <button onClick="acceptChange('
                             + '"' + 'null'
-                            + '","' + olds[i]['tg_id']
+                            + '","' + olds[i]['sa_tg_id']
                             + '","' + sid
                             + '","' + tid
                             + '","' + sc_allapproval + '0)">不同意</button>'
