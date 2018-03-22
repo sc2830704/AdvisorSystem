@@ -188,11 +188,11 @@ namespace advisorSystem.lib
             return returnJO;
 
         }
-        public JObject UpdateApply(String tg_id, String t_id,int accept)
+        public JObject UpdateApply(String tg_id, String t_id, String adminId, int accept)
         {
             sqlHelper = new SQLHelper();
             JObject obj = new JObject();
-            String query = " update sa set sa_state=" + accept + ", sa_check_by_type=1, sa_check_by_st_id='" + t_id + "'" +
+            String query = " update sa set sa_state=" + accept + ", sa_check_by_type=1, sa_check_by_st_id='" + adminId + "'" +
                             " FROM ntust.student_apply sa" +
                             " WHERE sa_tg_id = '" + tg_id + "' AND sa_t_id = '" + t_id + "'";
             JObject updateStatus = sqlHelper.update(query);
@@ -230,6 +230,13 @@ namespace advisorSystem.lib
             sqlHelper = new SQLHelper();
             String query = "UPDATE hsa set hsa_end_datetime='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "' ,hsa_state=" + state + "  FROM ntust.history_student_apply hsa WHERE hsa_tg_id = " + tg_id;
             sqlHelper.update(query);
+        }
+        public JObject UpdateStudentApplyStatus(String s_id, int state)
+        {
+            sqlHelper = new SQLHelper();
+            String query = "UPDATE sas set sas_type=" + state + " FROM ntust.student_apply_status AS sas WHERE sas_s_id='" + s_id + "'";
+            JObject applyStatus = sqlHelper.select(query);
+            return applyStatus;
         }
 
     }

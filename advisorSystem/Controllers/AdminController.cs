@@ -175,10 +175,10 @@ namespace advisorSystem.Controllers
             return RedirectToAction("Index", "Home");
 
         }
-        public String UpdateStudentApply(String tg_id, String t_id,String s_id, int accept)
+        public String UpdateStudentApply(String tg_id, String t_id, String s_id, int accept)
         {
             getRoleInfo();
-            JObject update_apply = adminHelper.UpdateApply(tg_id, t_id, accept);
+            JObject update_apply = adminHelper.UpdateApply(tg_id, t_id, adminId, accept);
 
             //check if all teacher agree for application, 
             /* CheckAllApply get 0 means all student apply in accept */
@@ -205,7 +205,7 @@ namespace advisorSystem.Controllers
         }
         public String UpdateStudentChange(String sc_id, String org_tg_id, String s_id, String t_id, String thesis_state, String sc_allapproval, int accept)
         {
-
+            getRoleInfo();
             ////update teacher accpet according to allapprove
             //JObject update_change = adminHelper.UpdateChange(sc_id, s_id, t_id, thesis_state, sc_allapproval, accept);
 

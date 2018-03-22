@@ -71,7 +71,7 @@ namespace advisorSystem.lib
                                 "from ntust.student_apply as sa " +
                                 "join [ntust].[teacher_group] as tg on tg.tg_id = sa.sa_tg_id " +
                                 "join ntust.student as s on s.s_id = sa.sa_s_id " +
-                                "join ntust.history_student_apply as hsa on hsa.hsa_s_id = sa.sa_s_id " +
+                                "join ntust.history_student_apply as hsa on hsa.hsa_s_id = sa.sa_s_id AND hsa.hsa_tg_id = sa.sa_tg_id " +
                                 "WHERE sa.sa_state = 0 AND sa.sa_t_id = '"+ t_id +"' " +
                                 "UNION " +
                                 "SELECT sa.sa_s_id, sa.sa_tg_id, s.s_name,hsa.hsa_create_datetime,1 AS allapprove " +
@@ -79,7 +79,7 @@ namespace advisorSystem.lib
                                 "join [ntust].[teacher_group] as tg on tg.tg_id = sa.sa_tg_id " +
                                 "join ntust.student_apply as sa_notapprove on sa_notapprove.sa_tg_id = tg.tg_id and sa_notapprove.sa_state = 0 and sa_notapprove.sa_t_id != '" + t_id + "' " +
                                 "join ntust.student as s on s.s_id = sa.sa_s_id " +
-                                "join ntust.history_student_apply as hsa on hsa.hsa_s_id = sa.sa_s_id " +
+                                "join ntust.history_student_apply as hsa on hsa.hsa_s_id = sa.sa_s_id AND hsa.hsa_tg_id = sa.sa_tg_id " +
                                 "WHERE(sa.sa_state = 1 OR sa.sa_state = 2) AND sa.sa_t_id = '" + t_id + "'";
 
             return sqlHelper.select(queryStr);
@@ -268,6 +268,13 @@ namespace advisorSystem.lib
                             "WHERE(tg.t_id = '"+t_id+"') OR(org_tg.t_id = '"+t_id+"')";
             JObject changeHistory = sqlHelper.select(query);
             return changeHistory;
+        }
+        public JObject UpdateStudentApplyStatus(String s_id, int state)
+        {
+            sqlHelper = new SQLHelper();
+            String query = "UPDATE sas set sas_type="+state+ " FROM ntust.student_apply_status AS sas WHERE sas_s_id='" + s_id+"'";
+            JObject applyStatus = sqlHelper.select(query);
+            return applyStatus;
         }
     }
     

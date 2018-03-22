@@ -104,7 +104,7 @@
                     data['sid'],
                     data['sname'],
                     data['tname'],
-                    '<button onClick="changeTeacher(' + data['sid']+')">更改指導教授</button>'
+                    '<button onClick="changeTeacher(\'' + data['sid']+'\')">更改指導教授</button>'
                 ]);
                 var sid = data['sid'];
                 var sc_allapproval = data['sc_allapproval'];
@@ -114,16 +114,16 @@
                 for (var i in apply) {
                     var tname = apply[i]['tname'];
                     var status = apply[i]['status'];
-                    var tg_id = apply[i]['tg_id'];
+                    var tg_id = apply[i]['sa_tg_id'];
                     var tid = apply[i]['tid'];
                     var text = '';
                     console.log(apply[i]);
-                    if (status == 0)
+                    if (status == "1")
                         text = '等待請他老師確認';
                     else
-                        text = '<button onClick="acceptApply("' + tg_id + '","' + sid + '","' + tid
-                            + '"1)">同意</button> <button onClick="acceptApply("' + tg_id + '","' + sid
-                            + '"0)">不同意</button>'
+                        text = '<button onClick=\'acceptApply("' + tg_id + '","' + sid + '","' + tid
+                            + '",1)\'>同意</button> <button onClick=\'acceptApply("' + tg_id + '","' + sid
+                            + '",0)\'>不同意</button>'
                     html += tname +"   "+ text+"</br>";
                 }
                 $("#apply").html(html);
@@ -157,10 +157,21 @@
                     var tname = news[i]['tname'];
                     var status = news[i]['status'];
                     var text = '';
-                    if (status == 1)
-                        text = '等待請他老師確認';
+                    if (status == "1")
+                        text = '等待其他老師確認';
                     else
-                        text = '<button onClick="acceptChange(1)">同意</button> <button onClick="acceptChange(0)">不同意</button>'
+                        text = '<button onClick="acceptChange('
+                            + '"' + news[i]['sc_id']
+                            + '","' + 'null'
+                            + '","' + sid
+                            + '","' + tid
+                            + '","' + sc_allapproval + '1)">同意</button>' +
+                            ' <button onClick="acceptChange('
+                            + '"' + news[i]['sc_id']
+                            + '","' + 'null'
+                            + '","' + sid
+                            + '","' + tid
+                            + '","' + sc_allapproval + '0)">不同意</button>'
                     html += tname + text + "</br>" ;
                 }
                 
@@ -173,7 +184,7 @@
 
 
     }
-    function acceptApply(tg_id, t_id, s_id,state){
+    function acceptApply(tg_id, s_id, t_id , accept) {
         var data = {
             "tg_id": tg_id,
             "t_id": t_id,
@@ -188,17 +199,16 @@
             modal: true,
             buttons: {
                 "確定": function () {
+                    $("#teacher").text(t_id);
                     $(this).dialog("close");
                     $.ajax({
                         type: "POST",
-                        url: "/teacher/UpdateStudentApply",
+                        url: "/admin/UpdateStudentApply",
                         data: data,
                         dataType: "json",
                         success: function (data) {
                             console.log(data);
-                            getStudentApply();
-                            getStudent();
-                            getStudentApplyHistory();
+                            loadStudentInfo(s_id);
                         }
                     })
                 },
@@ -295,4 +305,8 @@
 
     <p><h4>異動申請</h4></p>
     <div id="change">    </div>
+</div>
+<div id="dialog-acceptApply" title="同意申請" hidden>
+    <p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;">
+        </span>同意<a id="teacher"></a>為該學生之指導學生</p>
 </div>
