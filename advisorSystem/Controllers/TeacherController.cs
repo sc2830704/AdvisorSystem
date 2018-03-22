@@ -90,34 +90,7 @@ namespace advisorSystem.Controllers
             else
                 return change["msg"].ToString();
         }
-        [Authorize(Roles = "teacher")]public String UpdateStudentApply(String tg_id, String s_id, int accept)
-        {
-            getRoleInfo();
-            JObject update_apply = teacherHelper.UpdateApply(tg_id, accept);
-
-            //check if all teacher agree for application, 
-            /* CheckAllApply get 0 means all student apply in accept */
-            if (teacherHelper.CheckAllApply(tg_id) == 0)
-            {
-                //add new pair
-                teacherHelper.AddApplyPair(tg_id, s_id);
-                //update student apply history
-                teacherHelper.UpdateStudentApplyHistory(tg_id, state:1); //state=1 means success
-            }
-            else
-            {
-                //全部都完成了，而且有老師拒絕
-                //check if all teacher are check and there's rejection to apply
-                //todo - update history student apply (state and ...?)
-                //remove - 
-            }
-
-            return update_apply["status"].ToString(Formatting.None);
-            //if ((bool)change["status"])
-            //    return change["status"].ToString(Formatting.None);
-            //else
-            //    return change["msg"].ToString();
-        }
+        [Authorize(Roles = "teacher")]
         public String UpdateStudentApply(String tg_id, String s_id, int accept)
         {
             getRoleInfo();

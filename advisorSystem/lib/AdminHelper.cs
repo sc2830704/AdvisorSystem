@@ -188,9 +188,49 @@ namespace advisorSystem.lib
             return returnJO;
 
         }
+        public JObject UpdateApply(String tg_id, String t_id,int accept)
+        {
+            sqlHelper = new SQLHelper();
+            JObject obj = new JObject();
+            String query = " update sa set sa_state=" + accept + ", sa_check_by_type=1, sa_check_by_st_id='" + t_id + "'" +
+                            " FROM ntust.student_apply sa" +
+                            " WHERE sa_tg_id = '" + tg_id + "' AND sa_t_id = '" + t_id + "'";
+            JObject updateStatus = sqlHelper.update(query);
+            return updateStatus;
 
-
-
+        }
+        public int CheckAllApply(String tg_id)
+        {
+            sqlHelper = new SQLHelper();
+            //找出所有未同意的老師申請的數量
+            JObject obj = new JObject();
+            //query for apply which not agree 
+            String query = " SELECT COUNT(*) AS count FROM " +
+                            "ntust.student_apply sa " +
+                            "WHERE sa.sa_tg_id = " + tg_id + " AND sa.sa_state != 1 ";
+            JObject updateStatus = sqlHelper.select(query);
+            JArray array = (JArray)updateStatus.GetValue("data");
+            System.Diagnostics.Debug.Print(array.ToString());
+            return Convert.ToInt32(updateStatus["data"][0]["count"]);
+        }
+        public JObject AddApplyPair(String tg_id, String s_id)
+        {
+            sqlHelper = new SQLHelper();
+            //String query = "INSERT INTO ntust.pair (p_tg_id, p_s_id, p_pair_date) VALUES ("+ tg_id +", '"+ s_id +"', '')";
+            String table = "ntust.pair";
+            JObject obj = new JObject();
+            obj.Add("p_tg_id", tg_id);
+            obj.Add("p_s_id", s_id);
+            obj.Add("p_pair_date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+            JObject res = sqlHelper.insert(table, obj);
+            return res;
+        }
+        public void UpdateStudentApplyHistory(String tg_id, int state)
+        {
+            sqlHelper = new SQLHelper();
+            String query = "UPDATE hsa set hsa_end_datetime='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "' ,hsa_state=" + state + "  FROM ntust.history_student_apply hsa WHERE hsa_tg_id = " + tg_id;
+            sqlHelper.update(query);
+        }
 
     }
 }

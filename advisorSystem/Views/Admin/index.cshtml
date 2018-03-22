@@ -115,11 +115,13 @@
                     var tname = apply[i]['tname'];
                     var status = apply[i]['status'];
                     var tg_id = apply[i]['tg_id'];
+                    var tid = apply[i]['tid'];
                     var text = '';
+                    console.log(apply[i]);
                     if (status == 0)
                         text = '等待請他老師確認';
                     else
-                        text = '<button onClick="acceptApply("' + tg_id + '","' +sid
+                        text = '<button onClick="acceptApply("' + tg_id + '","' + sid + '","' + tid
                             + '"1)">同意</button> <button onClick="acceptApply("' + tg_id + '","' + sid
                             + '"0)">不同意</button>'
                     html += tname +"   "+ text+"</br>";
@@ -171,9 +173,10 @@
 
 
     }
-    function acceptApply(tg_id, s_id,state){
+    function acceptApply(tg_id, t_id, s_id,state){
         var data = {
             "tg_id": tg_id,
+            "t_id": t_id,
             "s_id": s_id,
             "accept": accept
         }
