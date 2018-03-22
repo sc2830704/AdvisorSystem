@@ -124,19 +124,19 @@ namespace advisorSystem.Controllers
             getRoleInfo();
 
             //update teacher accpet according to allapprove
-            JObject update_change = teacherHelper.UpdateChange(sc_id, s_id, t_id, thesis_state, sc_allapproval, accept);
+            JObject update_change = teacherHelper.UpdateChange(sc_id, org_tg_id, s_id, t_id, thesis_state, sc_allapproval, accept);
 
             System.Diagnostics.Debug.Print((String)update_change["status"]);
 
             /*check if all original teacher agree for change advisor*/
              // if they all agree then add new pair 
-            if (sc_allapproval.Equals("0") && teacherHelper.CheckOrgChange(sc_id) == 0)
+            if (sc_allapproval.Equals("0") && teacherHelper.CheckOrgChange(org_tg_id) == 0)
             {
                 // CheckAllApply get 0 means all student_apply is accepted
                 // then update student apply allapprove to 1
                 teacherHelper.UpdateStudentChangeApproval(sc_id);
 
-            }else if(sc_allapproval.Equals("1") && teacherHelper.CheckNewChange(sc_id) == 0)
+            }else if(sc_allapproval.Equals("1") && teacherHelper.CheckNewChange(org_tg_id) == 0)
             {
                 //remove original pair
                 teacherHelper.removePair(s_id);

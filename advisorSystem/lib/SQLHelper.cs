@@ -63,11 +63,11 @@ namespace advisorSystem.lib
             return false;
         }
 
-        public JToken getApplyResult()
+        public JToken getApplyResult(string par_s_id=null)
         {
             JArray returnJA = new JArray();
             JObject condi = new JObject();
-            condi["sas_s_id"] = s_id;
+            condi["sas_s_id"] = par_s_id == null?s_id: par_s_id;
             condi["sas_type"] = 1;//apply
             JObject returnValue = sqlHelper.select("[ntust].[student_apply_status]", condi);
             if (!(bool)returnValue["status"]) {
@@ -75,7 +75,7 @@ namespace advisorSystem.lib
             }
 
             condi = new JObject();
-            condi["sa_s_id"] = s_id;
+            condi["sa_s_id"] = par_s_id == null ? s_id : par_s_id;
             JToken data = returnValue["data"];
             System.Diagnostics.Debug.Print("aa"+data.ToString());
             JObject dataJO = (JObject)data[0];
@@ -95,11 +95,89 @@ namespace advisorSystem.lib
 
         }
 
-        public JToken getChangeResult()
+        public JToken getApplyResultForAdmin(string par_s_id)
         {
             JArray returnJA = new JArray();
             JObject condi = new JObject();
-            condi["sas_s_id"] = s_id;
+            condi["sas_s_id"] = par_s_id;
+            condi["sas_type"] = 1;//apply
+            JObject returnValue = sqlHelper.select("[ntust].[student_apply_status]", condi);
+            if (!(bool)returnValue["status"])
+            {
+                return returnJA;
+            }
+
+            condi = new JObject();
+            condi["sa_s_id"] = par_s_id;
+            JToken data = returnValue["data"];
+            System.Diagnostics.Debug.Print("aa" + data.ToString());
+            JObject dataJO = (JObject)data[0];
+            condi["sa_tg_id"] = (int)dataJO["sas_tg_id"];
+            returnValue = sqlHelper.select("[ntust].[student_apply] sa"
+                                    + " LEFT JOIN [ntust].[teacher] t on sa.sa_t_id=t.t_id AND sa.sa_t_type=1"
+                                    + " LEFT JOIN [ntust].[extra_teacher] et on sa.sa_t_id=et.t_id AND sa.sa_t_type=2", condi
+                                    , select: "(Case when t.t_name IS NULL then et.t_name else t.t_name End) tname, (Case when t.t_id IS NULL then et.t_id else t.t_id End) tid, sa.sa_state status, sa.sa_id, sa.sa_t_type t_type");
+            if ((bool)returnValue["status"])
+            {
+                return returnValue["data"];
+            }
+            else
+            {
+                return returnJA;
+            }
+
+        }
+        
+        public JObject getChangeResultForAdmin(string par_s_id)
+        {
+            JObject returnJO = new JObject();
+            returnJO["old"] = new JArray();
+            returnJO["new"] = new JArray();
+            JObject condi = new JObject();
+            condi["sas_s_id"] = par_s_id;
+            condi["sas_type"] = 2;//change
+            JObject returnValue = sqlHelper.select("[ntust].[student_apply_status]", condi);
+            if (!(bool)returnValue["status"])
+            {
+                return returnJO;
+            }
+
+            condi = new JObject();
+            condi["p.p_s_id"] = par_s_id;
+            returnValue = sqlHelper.select("[ntust].[pair] p"
+                                    + " JOIN [ntust].[student_change_origin_teacher_approval] scota on scota.scota_tg_id=p.p_tg_id"
+                                    + " JOIN [ntust].[teacher_group] tg on tg.tg_id=p.p_tg_id"
+                                    + " LEFT JOIN [ntust].[teacher] t on tg.t_id=t.t_id AND tg.t_type=1"
+                                    + " LEFT JOIN [ntust].[extra_teacher] et on tg.t_id=et.t_id AND tg.t_type=2", condi
+                                    , select: "tg.tg_id as tg_id, (Case when t.t_name IS NULL then et.t_name else t.t_name End) tname, (Case when t.t_id IS NULL then et.t_id else t.t_id End) tid, scota.scota_state status, scota.scota_thesis_state, tg.t_type t_type");
+            if ((bool)returnValue["status"])
+            {
+                returnJO["old"] = returnValue["data"];
+            }
+
+            condi = new JObject();
+            condi["sc_s_id"] = par_s_id;
+            JToken data = returnValue["data"];
+            System.Diagnostics.Debug.Print("bb" + data.ToString());
+            JObject dataJO = (JObject)data[0];
+            condi["sc_tg_id"] = (int)dataJO["sas_tg_id"];
+            returnValue = sqlHelper.select("[ntust].[student_change] sc"
+                                    + " LEFT JOIN [ntust].[teacher] t on sc.sc_t_id=t.t_id AND sc.sc_t_type=1"
+                                    + " LEFT JOIN [ntust].[extra_teacher] et on sc.sc_t_id=et.t_id AND sc.sc_t_type=2", condi
+                                    , select: "(Case when t.t_name IS NULL then et.t_name else t.t_name End) as tname, (Case when t.t_id IS NULL then et.t_id else t.t_id End) tid, sc.sc_state status, sc.sc_id, sc.sc_t_type t_type");
+            if ((bool)returnValue["status"])
+            {
+                returnJO["new"] = returnValue["data"];
+            }
+
+            return returnJO;
+        }
+
+        public JToken getChangeResult(string par_s_id = null)
+        {
+            JArray returnJA = new JArray();
+            JObject condi = new JObject();
+            condi["sas_s_id"] = par_s_id == null ? s_id : par_s_id;
             condi["sas_type"] = 2;//change
             JObject returnValue = sqlHelper.select("[ntust].[student_apply_status]", condi);
             if (!(bool)returnValue["status"])
@@ -108,7 +186,7 @@ namespace advisorSystem.lib
             }
 
             condi = new JObject();
-            condi["sc_s_id"] = s_id;
+            condi["sc_s_id"] = par_s_id == null ? s_id : par_s_id;
             JToken data = returnValue["data"];
             System.Diagnostics.Debug.Print("bb" + data.ToString());
             JObject dataJO = (JObject)data[0];
@@ -135,12 +213,18 @@ namespace advisorSystem.lib
             JObject returnValue = new JObject();
 
             condi["hsc_s_id"] = s_id;
-            returnValue = sqlHelper.select("[ntust].[history_student_change] hsc"
-                                    + " JOIN [ntust].[teacher_group] ori_tg on hsc.hsc_origin_tg_id=ori_tg.tg_id"
-                                    + " LEFT JOIN [ntust].[teacher] ori_t on ori_t.t_id=ori_tg.t_id"
-                                    + " JOIN [ntust].[teacher_group] tg on hsc.hsc_tg_id=tg.tg_id"
-                                    + " LEFT JOIN [ntust].[teacher] t on t.t_id=tg.t_id", condi
-                                    , select: "hsc.hsc_create_datetime, hsc.hsc_end_datetime, hsc.hsc_state, t.t_name, ori_t.t_name as ori_t_name");
+            returnValue = sqlHelper.select("[ntust].[history_student_change] hsc", condi
+                                    , select: "hsc.hsc_create_datetime, hsc.hsc_end_datetime, hsc.hsc_state"+
+                                            ", STUFF((SELECT  ', ' + new_t.t_name " +
+                                                "FROM ntust.teacher_group as new_tg " +
+                                                "join ntust.teacher as new_t on new_t.t_id = new_tg.t_id " +
+                                                "WHERE hsc.hsc_tg_id = new_tg.tg_id " +
+                                                "FOR XML PATH('')),1,1,'') AS t_name" +
+                                            ", STUFF((SELECT  ', ' + ori_t.t_name " +
+                                                "FROM ntust.teacher_group as ori_tg " +
+                                                "join ntust.teacher as ori_t on ori_t.t_id = ori_tg.t_id " +
+                                                "WHERE hsc.hsc_origin_tg_id = ori_tg.tg_id " +
+                                                "FOR XML PATH('')),1,1,'') AS ori_t_name");//  t.t_name, ori_t_name
             if ((bool)returnValue["status"])
             {
                 return returnValue["data"];
@@ -365,6 +449,15 @@ namespace advisorSystem.lib
                 return returnValue;
             }
 
+            String query = "INSERT INTO ntust.student_change_origin_teacher_approval(scota_tg_id, scota_t_id, scota_thesis_state, scota_state, scota_create_by_type)" +
+                            " SELECT tg.tg_id, tg.t_id, 0, 0, 1" +
+                            " FROM ntust.teacher_group AS tg WHERE tg.tg_id = "+ oriTgId.ToString();
+            returnValue = sqlHelper.insert(query);
+            if (!(bool)returnValue["status"])
+            {
+                return returnValue;
+            }
+
             DateTime myDateTime = DateTime.Now;
             string sqlFormattedDate = myDateTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
             insertObj = new JObject();
@@ -386,7 +479,7 @@ namespace advisorSystem.lib
 
             if ((bool)returnValue["status"])
             {
-                String query = "UPDATE ntust.student_apply_status set sas_tg_id=" + tgId + " ,sas_type=2 WHERE sas_s_id = '" + s_id + "'";
+                query = "UPDATE ntust.student_apply_status set sas_tg_id=" + tgId + " ,sas_type=2 WHERE sas_s_id = '" + s_id + "'";
                 returnValue = sqlHelper.update(query);
             }
             else
@@ -577,6 +670,7 @@ namespace advisorSystem.lib
                         cn.Close();
                         queryResult["status"] = false;
                         queryResult["msg"] = "empty";
+                        System.Diagnostics.Debug.Print(queryResult.ToString());
                         return queryResult;
                     }
                     while (dr.Read())

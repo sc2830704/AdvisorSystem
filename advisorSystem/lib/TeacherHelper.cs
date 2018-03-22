@@ -106,8 +106,9 @@ namespace advisorSystem.lib
                                 "join ntust.teacher as t on t.t_id = sc.sc_t_id " +
                                 "join ntust.student as s on s.s_id = sc.sc_s_id " +
                                 "join ntust.history_student_change as hsc on hsc.hsc_s_id = s.s_id " +
-                                "left join ntust.student_change_origin_teacher_approval as scota on scota.scota_sc_id = sc.sc_id AND scota.scota_t_id = '"+ t_id + "' " +
                                 "join ntust.teacher_group as org_tg on org_tg.tg_id = hsc.hsc_origin_tg_id " +
+                                "left join ntust.student_change_origin_teacher_approval as scota on scota.scota_tg_id = org_tg.tg_id AND scota.scota_t_id = '" + t_id + "' " +
+                                //"left join ntust.student_change_origin_teacher_approval as scota on scota.scota_sc_id = sc.sc_id AND scota.scota_t_id = '" + t_id + "' " +
                                 "left join ntust.pair as p on p.p_tg_id = sc.sc_tg_id " +
                                 "WHERE((org_tg.t_id = '" + t_id + "' AND sc.sc_state = 0) OR(t.t_id = '" + t_id + "' AND sc.sc_all_approval = 1 AND sc.sc_state = 0)) AND p.p_tg_id is NULL");
 
@@ -163,23 +164,23 @@ namespace advisorSystem.lib
             System.Diagnostics.Debug.Print(array.ToString());
             return Convert.ToInt32(updateStatus["data"][0]["count"]);
         }
-        public int CheckOrgChange(String sc_id)
+        public int CheckOrgChange(String org_tg_id)
         {
             sqlHelper = new SQLHelper();
             //query for apply which not agree 
             String query = "SELECT COUNT(*) AS count "+
                         "FROM ntust.student_change_origin_teacher_approval scota "+
-                        "WHERE scota.scota_sc_id = "+sc_id+" AND scota.scota_state!=1";
+                        "WHERE scota.scota_tg_id = "+ org_tg_id + " AND scota.scota_state!=1";
             JObject updateStatus = sqlHelper.select(query);
             return Convert.ToInt32(updateStatus["data"][0]["count"]);
         }
-        public int CheckNewChange(String sc_id)
+        public int CheckNewChange(String org_tg_id)
         {
             sqlHelper = new SQLHelper();
             //query for apply which not agree 
             String query = "SELECT COUNT(*) AS count " +
                         "FROM ntust.student_change_origin_teacher_approval scota " +
-                        "WHERE scota.scota_sc_id = " + sc_id + " AND scota.scota_state!=1";
+                        "WHERE scota.scota_tg_id = " + org_tg_id + " AND scota.scota_state!=1";
             JObject updateStatus = sqlHelper.select(query);
             return Convert.ToInt32(updateStatus["data"][0]["count"]);
         }
@@ -208,7 +209,7 @@ namespace advisorSystem.lib
 
             return res;
         }
-        public JObject UpdateChange(String sc_id, String s_id, String t_id, String thesis_state, String allapprove, int accept)
+        public JObject UpdateChange(String sc_id, String org_tg_id, String s_id, String t_id, String thesis_state, String allapprove, int accept)
         {
             sqlHelper = new SQLHelper();
             String query;
@@ -217,7 +218,7 @@ namespace advisorSystem.lib
                 query = " UPDATE scota set scota_state = "+accept+",scota_thesis_state="+ thesis_state + 
                             ", scota_check_by_type=1, scota_check_by_st_id='"+ t_id + "' " +
                            " FROM ntust.student_change_origin_teacher_approval scota" +
-                           " WHERE scota.scota_sc_id ='" + sc_id + "' AND scota.scota_t_id = '" + t_id + "'";
+                           " WHERE scota.scota_tg_id ='" + org_tg_id + "' AND scota.scota_t_id = '" + t_id + "'";
                 //檢查是否原本老師全部同意:如果是就更新allapproval=1
             }
             else //更新 申請新老師的表(sc)
