@@ -21,6 +21,7 @@ namespace advisorSystem.Controllers
     {
         private ApplicationSignInManager _signInManager;
         private ApplicationUserManager _userManager;
+
         private string userId;
         private string adminId;
         private JObject adminInfo;
@@ -30,6 +31,7 @@ namespace advisorSystem.Controllers
         public AdminController()
         {
         }
+
 
         private void getRoleInfo()
         {
@@ -62,9 +64,9 @@ namespace advisorSystem.Controllers
             ViewBag.Message = "Link your mssql.";
             ViewBag.Depart = "電子";
             ViewBag.User = "我";
-            ViewBag.MasterColumn = "<th>104</th><th>105</th>";
             return View();
         }
+
 
         // POST: /admin/GetStudentSemester
         [HttpPost]
@@ -171,35 +173,13 @@ namespace advisorSystem.Controllers
                 return Redirect(returnUrl);
             }
             return RedirectToAction("Index", "Home");
+
         }
-
-        internal class ChallengeResult : HttpUnauthorizedResult
+        public String GetStudnetApply(String sid)
         {
-            public ChallengeResult(string provider, string redirectUri)
-                : this(provider, redirectUri, null)
-            {
-            }
-
-            public ChallengeResult(string provider, string redirectUri, string userId)
-            {
-                LoginProvider = provider;
-                RedirectUri = redirectUri;
-                UserId = userId;
-            }
-
-            public string LoginProvider { get; set; }
-            public string RedirectUri { get; set; }
-            public string UserId { get; set; }
-
-            public override void ExecuteResult(ControllerContext context)
-            {
-                var properties = new AuthenticationProperties { RedirectUri = RedirectUri };
-                if (UserId != null)
-                {
-                    properties.Dictionary[XsrfKey] = UserId;
-                }
-                context.HttpContext.GetOwinContext().Authentication.Challenge(properties, LoginProvider);
-            }
+            JObject studentApply = adminHelper.GetStudnetApply(sid);
+            
+            return studentApply["data"].ToString(Formatting.None);
         }
         #endregion
     }

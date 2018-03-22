@@ -10,6 +10,7 @@ namespace advisorSystem.lib
     {
         
         SQLHelper sqlHelper;
+
         private string st_id;
         JObject st_info = new JObject();
         StudentSQL studentSQL = new StudentSQL();
@@ -23,18 +24,22 @@ namespace advisorSystem.lib
             JObject condi = new JObject();
             condi["st_u_id"] = userId;
             JObject returnValue = sqlHelper.select("[ntust].[staff]", condi);
+
             if ((bool)returnValue["status"])
             {
                 foreach (JToken jt in returnValue["data"])
                 {
+
                     st_info = (JObject)jt;
                     st_id = (string)st_info["st_id"];
                 }
                 return st_info;
+
             }
             else
             {
                 //String msg = returnValue["msg"].ToString();
+
                 return st_info;
             }
         }
@@ -189,4 +194,5 @@ namespace advisorSystem.lib
 
     }
     
+
 }

@@ -59,11 +59,6 @@ namespace advisorSystem.lib
         public JObject GetApply()
         {
             sqlHelper = new SQLHelper();
-            JObject obj = new JObject();
-
-            obj["sa.sa_state"] = 0;
-            obj["sa.sa_t_id"] = t_id;
-
             String select = " sa.sa_s_id, s.s_name, hsa.hsa_create_datetime, sa.sa_tg_id";
 
 
