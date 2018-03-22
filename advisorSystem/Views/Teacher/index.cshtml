@@ -54,7 +54,6 @@
             else
                 var _opHtml = "等待其他老師同意中";
             tableApply.row.add([
-                'X學年度',
                 _studentApplyJSONObjs[i]['sa_s_id'],
                 _studentApplyJSONObjs[i]['s_name'],
                 getGrade(_studentApplyJSONObjs[i]['sa_s_id']),
@@ -68,7 +67,6 @@
         //clear table every time
         tableChange.clear().draw();
         for (var i in _studentChangeJSONObjs) {
-            console.log(_studentChangeJSONObjs[i]);
             //原本老師還沒全部同意
             if (_studentChangeJSONObjs[i]["sc_all_approval"] == '0') {
                 if (_studentChangeJSONObjs[i]["scota_state"] == '0')
@@ -111,7 +109,6 @@
                     _opHtml = '等待其他老師同意中';
             }
             tableChange.row.add([
-                'X學年度',
                 _studentChangeJSONObjs[i]['sc_s_id'],
                 _studentChangeJSONObjs[i]['s_name'],
                 getGrade(_studentChangeJSONObjs[i]['sc_s_id']),
@@ -139,9 +136,7 @@
     }
     function loadChangeHistoryTable() {
         tableChangeHistory.clear().draw();
-        console.log(_studentChangeHistoryJSONObjs);
         for (var i in _studentChangeHistoryJSONObjs) {
-            console.log(_studentChangeHistoryJSONObjs[i]['hsc_create_datetime']);
             tableChangeHistory.row.add([
                 _studentChangeHistoryJSONObjs[i]['p_s_id'],
                 _studentChangeHistoryJSONObjs[i]['s_name'],
@@ -342,7 +337,6 @@
 <table id="tableApply" class="display" cellspacing="0" width="100%">
     <thead>
         <tr>
-            <th>學年度</th>
             <th>學號</th>
             <th>名字</th>
             <th>年級</th>
@@ -357,7 +351,6 @@
 <table id="tableChange" class="display" cellspacing="0" width="100%">
     <thead>
         <tr>
-            <th>學年度</th>
             <th>學號</th>
             <th>名字</th>
             <th>年級</th>

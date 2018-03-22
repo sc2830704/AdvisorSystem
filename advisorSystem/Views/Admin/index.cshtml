@@ -8,56 +8,188 @@
     @Scripts.Render("~/bundles/jquery-ui")
 }
 <script>
-    var tableStudent;
+    var tableStudent, tableStudentInfo;
+    var _studentListJSONObjs;
+    var studnetSemester;
+    var dialogStudentInfo;
     $(document).ready(function () {
         //initialize datatabke
-        generatorTable([{ semester: '105' }, { semester: '106' }]);
-        loadStudentTable();
-
-
+        generatorTable();
+        tableStudentInfo = $("#tableStudentInfo").DataTable({ searching: false, paging: false, "bInfo": false });
 
     });
-    function getStudentList(depart) {
+    
+    function generatorTable() {
         $.ajax({
             type: "GET",
-            url: "/admin/GetStudentList/depart",
+            url: "/admin/GetStudentSemester",
+            data: null,
+            dataType: "JSON",
+            success: function (data) {
+                studnetSemester = data;
+                //create fix column
+                var column = [
+                    { title: "教師姓名" },
+                    { title: "博士班" },
+                    { title: "在職" },
+                    { title: "異動紀錄." }
+                ];
+                //add dynamic semester column according to data
+                for (var i in data) {
+                    var semester = data[i];
+                    column.splice(2, 0, { title: semester });
+                }
+                //create datatable
+                tableStudent = $("#table").DataTable({
+                    columns: column,
+                    searching: false, paging: false, "bInfo": false
+                });
+
+                getStudentList();
+            }
+        })
+
+        
+    }
+    function getStudentList() {
+        $.ajax({
+            type: "GET",
+            url: "/admin/GetStudentList",
             data: null,
             dataType: "json",
             success: function (data) {
-                generatorTable(data);
+                _studentListJSONObjs = data;
+                loadStudentTable();
             }
         })
-    }
-    function generatorTable(data) {
-        console.log(data);
-        var column = [
-            { title: "碩博士生一覽表" },
-            { title: "博士班" },
-            { title: "在職" },
-            { title: "異動紀錄." }
-        ];
-        for (var i in data) {
-            var semester = data[i]['semester'];
-            column.splice(2, 0, { title: semester });
-        }
-        console.log(column);
-        tableStudent = $("#table").DataTable({
-            columns: column
-        });
     }
     function loadStudentTable() {
         tableStudent.clear().draw();
+        for (var i in _studentListJSONObjs) {
+            //create row data object
+            var newRow = [
+                _studentListJSONObjs[i]['tname'],
+                getStudnetClickEvent(_studentListJSONObjs[i]['phd']),
+                getStudnetClickEvent(_studentListJSONObjs[i]['pt_m'])
+            ];
+            //process master student column data and add to row data
+            for (var c in studnetSemester) {
+                var semester = studnetSemester[c];
+                newRow.splice(2, 0, getStudnetClickEvent (_studentListJSONObjs[i][semester]));
+            }
+            //process history data and push into row data
+            var history = _studentListJSONObjs[i]['history'];
+            var value='';
+            for (var c in history) {
+                value += history[c]['hsc_endtime'] + history[c]['hsc_s_id'] + history[c]['in_or_out'] + '</br>';
+            }
+            newRow.push(value);
+            tableStudent.row.add(newRow);
+        }
+        tableStudent.draw();
+    }
+    function loadStudentInfo(sid) {
+
+        tableStudentInfo.clear().draw();
+        var s_info = { "sid": sid };
         $.ajax({
             type: "GET",
-            url: "/teacher/GetStudentList/depart",
-            data: null,
+            url: "/admin/GetStudentInfo",
+            data: s_info,
             dataType: "json",
             success: function (data) {
-                generatorTable(data);
+
+                tableStudentInfo.row.add([
+                    data['sid'],
+                    data['sname'],
+                    data['tname'],
+                    '<button onClick="changeTeacher(' + data['sid']+')">更改指導教授</button>'
+                ]);
+
+                //get student apply
+                var apply = data['apply'];
+                var html = '';
+                for (var i in apply) {
+                    var tname = apply[i]['tname'];
+                    var status = apply[i]['status'];
+                    var text = '';
+                    if (status == 1)
+                        text = '等待請他老師確認';
+                    else
+                        text = '<button onClick="acceptApply(1)">同意</button> <button onClick="acceptApply(0)">不同意</button>'
+                    html += tname +"   "+ text+"</br>";
+                }
+                $("#apply").html(html);
+                
+                //get student change
+                html = '';
+                var olds = data['change']['old'];
+                var news = data['change']['new'];
+                for (var i in olds) {
+                    var tname = olds[i]['tname'];
+                    var status = olds[i]['status'];
+                    var text = '';
+                    if (status == 1)
+                        text = '等待請他老師確認';
+                    else
+                        text = '<button onClick="acceptChange(1)">同意</button> <button onClick="acceptChange(0)">不同意</button>'
+                    html += tname + text+"<br>";
+                }
+                for (var i in news) {
+                    var tname = news[i]['tname'];
+                    var status = news[i]['status'];
+                    var text = '';
+                    if (status == 1)
+                        text = '等待請他老師確認';
+                    else
+                        text = '<button onClick="acceptChange(1)">同意</button> <button onClick="acceptChange(0)">不同意</button>'
+                    html += tname + text + "</br>" ;
+                }
+                
+                $("#change").html(html);
+
+                
+                tableStudentInfo.draw();
             }
         })
-    }
 
+
+    }
+    fumction acceptApply(){
+    
+    }
+    function acceptChange() {
+
+
+    }
+    function getStudnetClickEvent(stu) {
+        var html = '';
+        for (var i in stu) {
+            var id = stu[i]['sid'];
+            var color = stu[i]['status'] == 0 ? "red;" : "blue;";
+            var foregin = id.charAt(6) == 8 ? "text-decoration:underline;":"1";
+            html += '<a href="#" style="color:' + color + foregin+'" onClick="dialogStudnetInfo(\'' + id + '\')">' + id + '</a ></br>';
+        }
+        return html;
+    }
+    function dialogStudnetInfo(sid) {
+        loadStudentInfo(sid);
+        $("#dialog-acceptChange").dialog({
+            resizable: false,
+            height: 600,
+            width: 1020,
+            modal: true,
+            buttons: {
+                "關閉": function () {
+                    $(this).dialog("close");
+                }
+            }
+        });
+
+    }
+    function changeTeacher(sid) {
+        //to-do 更改指導教授
+    }
 </script>
 <h3>
     <span>碩博士生一覽表</span>
@@ -65,3 +197,23 @@
     <span>學號: @ViewBag.User</span>
 </h3>
 <table id="table"></table>
+<p><h5>學號紅色為休學，底線為外籍生</h5></p>
+<div id="dialog-acceptChange" title="學生資訊" hidden>
+
+    <table id="tableStudentInfo">
+        <thead>
+            <tr>
+                <th>學號</th>
+                <th>學生姓名</th>
+                <th>指道教授</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <p><h4>申請指導教授</h4></p>
+    <div id="apply">    </div>
+
+    <p><h4>異動申請</h4></p>
+    <div id="change">    </div>
+</div>

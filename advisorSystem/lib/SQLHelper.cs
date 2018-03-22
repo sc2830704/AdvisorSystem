@@ -1016,6 +1016,7 @@ namespace advisorSystem.lib
             cn = new SqlConnection(connString);
             JArray data = new JArray();
 
+            queryResult["status"] = true;
             System.Diagnostics.Debug.Print(queryStr);
 
             using (cn)
@@ -1041,7 +1042,6 @@ namespace advisorSystem.lib
                 cn.Close();
             }
             System.Diagnostics.Debug.Print(data.ToString());
-            queryResult["status"] = true;
             queryResult["data"] = data;
             return queryResult;
 
