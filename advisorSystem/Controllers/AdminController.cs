@@ -105,7 +105,7 @@ namespace advisorSystem.Controllers
         {
             getRoleInfo();
 
-            JToken returnValue = adminHelper.getStudentInfo(Request.Form["sid"]);
+            JObject returnValue = adminHelper.getStudentInfo(Request.Form["sid"]);
 
             //returnValue.Add("main", Request.Form["main"]);
             //returnValue.Add("sub", Request.Form["sub"]);
@@ -174,12 +174,6 @@ namespace advisorSystem.Controllers
             }
             return RedirectToAction("Index", "Home");
 
-        }
-        public String GetStudnetApply(String sid)
-        {
-            JObject studentApply = adminHelper.GetStudnetApply(sid);
-            
-            return studentApply["data"].ToString(Formatting.None);
         }
         #endregion
     }

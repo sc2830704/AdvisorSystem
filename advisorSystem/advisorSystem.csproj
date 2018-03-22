@@ -206,7 +206,6 @@
     </Compile>
     <Compile Include="lib\AdminHelper.cs" />
     <Compile Include="lib\SQLHelper.cs" />
-    <Compile Include="lib\AdminHelper.cs" />
     <Compile Include="lib\TeacherHelper.cs" />
     <Compile Include="Models\TeacherViewModels.cs" />
     <Compile Include="Models\StudentViewModels.cs" />
