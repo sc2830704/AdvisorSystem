@@ -105,18 +105,21 @@
                     data['tname'],
                     '<button onClick="changeTeacher(' + data['sid']+')">更改指導教授</button>'
                 ]);
-
+                var sid = data['sid'];
                 //get student apply
                 var apply = data['apply'];
                 var html = '';
                 for (var i in apply) {
                     var tname = apply[i]['tname'];
                     var status = apply[i]['status'];
+                    var tg_id = apply[i]['tg_id'];
                     var text = '';
-                    if (status == 1)
+                    if (status == 0)
                         text = '等待請他老師確認';
                     else
-                        text = '<button onClick="acceptApply(1)">同意</button> <button onClick="acceptApply(0)">不同意</button>'
+                        text = '<button onClick="acceptApply("' + tg_id + '","' +sid
+                            + '"1)">同意</button> <button onClick="acceptApply("' + tg_id + '","' + sid
+                            + '"0)">不同意</button>'
                     html += tname +"   "+ text+"</br>";
                 }
                 $("#apply").html(html);
@@ -155,10 +158,43 @@
 
 
     }
-    fumction acceptApply(){
-    
+    function acceptApply(tg_id, s_id,state){
+        var data = {
+            "tg_id": tg_id,
+            "s_id": s_id,
+            "accept": accept
+        }
+
+        $("#dialog-acceptApply").dialog({
+            resizable: false,
+            height: "auto",
+            width: 400,
+            modal: true,
+            buttons: {
+                "確定": function () {
+                    $(this).dialog("close");
+                    $.ajax({
+                        type: "POST",
+                        url: "/teacher/UpdateStudentApply",
+                        data: data,
+                        dataType: "json",
+                        success: function (data) {
+                            console.log(data);
+                            getStudentApply();
+                            getStudent();
+                            getStudentApplyHistory();
+                        }
+                    })
+                },
+                "取消": function () {
+                    data.thesis_state = 2;
+                    $(this).dialog("close");
+                }
+            }
+        });
+
     }
-    function acceptChange() {
+    function acceptChange(state) {
 
 
     }
