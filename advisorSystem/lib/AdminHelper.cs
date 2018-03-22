@@ -177,14 +177,10 @@ namespace advisorSystem.lib
                 return returnJO;
 
             }
+            returnJO = (JObject)returnValue["data"][0];
+            returnJO["apply"] = studentSQL.getApplyResultForAdmin(s_id);
+            returnJO["change"] = studentSQL.getChangeResultForAdmin(s_id); 
             
-            foreach (JObject jt in returnValue["data"])
-            {
-                returnJO["apply"] = studentSQL.getApplyResultForAdmin(s_id);
-                returnJO["change"] = studentSQL.getChangeResultForAdmin(s_id); 
-
-
-            }
             return returnJO;
 
         }
