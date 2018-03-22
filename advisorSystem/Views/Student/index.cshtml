@@ -208,16 +208,16 @@
         var status;
         $.each($.changeHistory,function(k,v){
             switch(v.hsc_state){
-                case(0):
+                case "0":
                     status = "待確認";
                     break;
-                case(1):
+                case "1":
                     status = "取消申請";
                     break;
-                case(2):
+                case "2":
                     status = "確認申請";
                     break;
-                case(3):
+                case "3":
                     status = "拒絕申請";
                     break;
             }
@@ -230,7 +230,7 @@
                     </tr>';
         });
         $('#changeHistoryList tbody').html(html);
-        $('#changeHistoryList').DataTable( {       
+        $('#changeHistoryList').DataTable( {
             "order": [[ 1, "desc" ]],
             "dom": 'tp',
             "pagingType": 'numbers',

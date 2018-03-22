@@ -21,7 +21,7 @@
     
     function generatorTable() {
         $.ajax({
-            type: "GET",
+            type: "POST",
             url: "/admin/GetStudentSemester",
             data: null,
             dataType: "JSON",
@@ -53,7 +53,7 @@
     }
     function getStudentList() {
         $.ajax({
-            type: "GET",
+            type: "POST",
             url: "/admin/GetStudentList",
             data: null,
             dataType: "json",
@@ -93,7 +93,7 @@
         tableStudentInfo.clear().draw();
         var s_info = { "sid": sid };
         $.ajax({
-            type: "GET",
+            type: "POST",
             url: "/admin/GetStudentInfo",
             data: s_info,
             dataType: "json",
@@ -106,6 +106,7 @@
                     '<button onClick="changeTeacher(' + data['sid']+')">更改指導教授</button>'
                 ]);
                 var sid = data['sid'];
+                var sc_allapproval = data['sc_allapproval'];
                 //get student apply
                 var apply = data['apply'];
                 var html = '';
@@ -123,7 +124,7 @@
                     html += tname +"   "+ text+"</br>";
                 }
                 $("#apply").html(html);
-                
+                console.log(data);
                 //get student change
                 html = '';
                 var olds = data['change']['old'];
@@ -135,7 +136,18 @@
                     if (status == 1)
                         text = '等待請他老師確認';
                     else
-                        text = '<button onClick="acceptChange(1)">同意</button> <button onClick="acceptChange(0)">不同意</button>'
+                        text = '<button onClick="acceptChange('
+                            + '"' + 'null'
+                            + '","' + olds[i]['tg_id']
+                            + '","' + sid
+                            + '","' + tid
+                            + '","' + sc_allapproval + '1)">同意</button>' +
+                            ' <button onClick="acceptChange('
+                            + '"' + 'null'
+                            + '","' + olds[i]['tg_id']
+                            + '","' + sid
+                            + '","' + tid
+                            + '","' + sc_allapproval + '0)">不同意</button>'
                     html += tname + text+"<br>";
                 }
                 for (var i in news) {
@@ -194,8 +206,35 @@
         });
 
     }
-    function acceptChange(state) {
-
+    function acceptChange(sc_id, org_tg_id, s_id, t_id, sc_allapproval, accept) {
+        var data = {
+            "sc_id": sc_id,
+            "org_tg_id": org_tg_id,
+            "s_id": s_id,
+            "t_id": t_id,
+            "thesis_state": 1,
+            "sc_allapproval": sc_allapproval,
+            "accept": accept
+        }
+        console.log("data");
+        console.log(data);
+        $("#dialog-acceptChange").dialog({
+            resizable: false,
+            height: "auto",
+            width: 400,
+            modal: true,
+            buttons: {
+                "同意": function () {
+                    $(this).dialog("close");
+                    UpdateStudentChange(data);
+                },
+                "不同意": function () {
+                    data.thesis_state = 2;
+                    $(this).dialog("close");
+                    UpdateStudentChange(data);
+                }
+            }
+        });
 
     }
     function getStudnetClickEvent(stu) {
