@@ -8,14 +8,15 @@ namespace advisorSystem.lib
 {
     public class AdminHelper
     {
-        
+
         SQLHelper sqlHelper;
 
         private string st_id;
         JObject st_info = new JObject();
         StudentSQL studentSQL = new StudentSQL();
 
-        public AdminHelper(){
+        public AdminHelper()
+        {
             sqlHelper = new SQLHelper();
         }
 
@@ -54,7 +55,7 @@ namespace advisorSystem.lib
 
             //condi["s_department"] = st_department;
 
-            
+
             returnValue = sqlHelper.select("(SELECT SUBSTRING(s.s_id, 1, 4) as sid_short from [ntust].[student] s" +
                                                                 " JOIN [ntust].[pair] p on s.s_id=p.p_s_id AND p.p_end_date IS NULL" +
                                                                 " JOIN [ntust].[teacher_group] tg on tg.tg_id=p.p_tg_id" +
@@ -65,7 +66,7 @@ namespace advisorSystem.lib
             {
                 foreach (JToken jt in returnValue["data"])
                 {
-                    returnJA.Add( ((JObject)jt)["sid_short"] );
+                    returnJA.Add(((JObject)jt)["sid_short"]);
                 }
                 return returnJA;
             }
@@ -97,7 +98,7 @@ namespace advisorSystem.lib
             if (!(bool)returnValue["status"])
             {
                 return returnJT;
-                
+
             }
             returnJT = returnValue["data"];
             foreach (JObject jt in returnJT)
@@ -118,13 +119,16 @@ namespace advisorSystem.lib
                             " JOIN [ntust].[student] s on s.s_id=p.p_s_id" +
                             " LEFT JOIN (SELECT max(sse_event) now_status, sse_s_id FROM [ntust].[student_state_event] GROUP BY sse_s_id) sse on sse.sse_s_id=s.s_id", condi
                                     , select: "sse.now_status, s.s_id");
-                if ((bool)returnValue["status"]) {
-                    foreach (JObject jo in returnValue["data"]) {
+                if ((bool)returnValue["status"])
+                {
+                    foreach (JObject jo in returnValue["data"])
+                    {
                         studentJO = new JObject();
                         s_id = (string)jo["s_id"];
                         studentJO["sid"] = s_id;
                         studentJO["status"] = jo["now_status"];
-                        if ( s_id.Substring(0, 1) == "D") {
+                        if (s_id.Substring(0, 1) == "D")
+                        {
                             ((JArray)jt["phd"]).Add(studentJO);
                             continue;
                         }
@@ -145,7 +149,7 @@ namespace advisorSystem.lib
                 {
                     foreach (JObject jo in returnValue["data"])
                     {
-                        
+
                     }
                 }
 
@@ -184,11 +188,9 @@ namespace advisorSystem.lib
             return returnJO;
 
         }
-        
+
 
 
 
     }
-    
-
 }

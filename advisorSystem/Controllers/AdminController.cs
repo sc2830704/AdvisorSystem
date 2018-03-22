@@ -175,6 +175,37 @@ namespace advisorSystem.Controllers
             return RedirectToAction("Index", "Home");
 
         }
-        #endregion
+        public String UpdateStudentChange(String sc_id, String org_tg_id, String s_id, String t_id, String thesis_state, String sc_allapproval, int accept)
+        {
+
+            ////update teacher accpet according to allapprove
+            //JObject update_change = adminHelper.UpdateChange(sc_id, s_id, t_id, thesis_state, sc_allapproval, accept);
+
+            //System.Diagnostics.Debug.Print((String)update_change["status"]);
+
+            ///*check if all original teacher agree for change advisor*/
+            //// if they all agree then add new pair 
+            //if (sc_allapproval.Equals("0") && adminHelper.CheckOrgChange(sc_id) == 0)
+            //{
+            //    // CheckAllApply get 0 means all student_apply is accepted
+            //    // then update student apply allapprove to 1
+            //    adminHelper.UpdateStudentChangeApproval(sc_id);
+
+            //}
+            //else if (sc_allapproval.Equals("1") && teacherHelper.CheckNewChange(sc_id) == 0)
+            //{
+            //    //remove original pair
+            //    adminHelper.removePair(s_id);
+            //    //add new paired
+            //    adminHelper.AddChangePair(sc_id, s_id);
+            //    //update student change history
+            //    adminHelper.UpdateStudentChangeHistory(org_tg_id, state: 1); //state=1 means success
+            //}
+            ////todo - remove student_change - another query to check is all change checked
+
+            //return update_change["status"].ToString(Formatting.None);
+            return null;
+        }
+        
     }
 }
