@@ -133,6 +133,7 @@ namespace advisorSystem.lib
             JObject returnJO = new JObject();
             returnJO["old"] = new JArray();
             returnJO["new"] = new JArray();
+            returnJO["sc_all_approval"] = "0";
             JObject condi = new JObject();
             condi["sas_s_id"] = par_s_id;
             condi["sas_type"] = 2;//change
@@ -142,6 +143,10 @@ namespace advisorSystem.lib
                 return returnJO;
             }
 
+            JToken data = returnValue["data"];
+            JObject dataJO = (JObject)data[0];
+            int sc_tg_id = (int)dataJO["sas_tg_id"];
+
             condi = new JObject();
             condi["p.p_s_id"] = par_s_id;
             returnValue = sqlHelper.select("[ntust].[pair] p"
@@ -149,7 +154,7 @@ namespace advisorSystem.lib
                                     + " JOIN [ntust].[teacher_group] tg on tg.tg_id=p.p_tg_id"
                                     + " LEFT JOIN [ntust].[teacher] t on tg.t_id=t.t_id AND tg.t_type=1"
                                     + " LEFT JOIN [ntust].[extra_teacher] et on tg.t_id=et.t_id AND tg.t_type=2", condi
-                                    , select: "tg.tg_id as tg_id, (Case when t.t_name IS NULL then et.t_name else t.t_name End) tname, (Case when t.t_id IS NULL then et.t_id else t.t_id End) tid, scota.scota_state status, scota.scota_thesis_state, tg.t_type t_type");
+                                    , select: "tg.tg_id as tg_id, (Case when t.t_name IS NULL then et.t_name else t.t_name End) tname, (Case when t.t_id IS NULL then et.t_id else t.t_id End) tid, scota.scota_state status, scota.scota_thesis_state, scota.scota_state, tg.t_type t_type");
             if ((bool)returnValue["status"])
             {
                 returnJO["old"] = returnValue["data"];
@@ -157,18 +162,16 @@ namespace advisorSystem.lib
 
             condi = new JObject();
             condi["sc_s_id"] = par_s_id;
-            JToken data = returnValue["data"];
-            System.Diagnostics.Debug.Print("bb" + data.ToString());
-            JObject dataJO = (JObject)data[0];
-            condi["sc_tg_id"] = (int)dataJO["sas_tg_id"];
+            condi["sc_tg_id"] = sc_tg_id;
             returnValue = sqlHelper.select("[ntust].[student_change] sc"
                                     + " LEFT JOIN [ntust].[teacher] t on sc.sc_t_id=t.t_id AND sc.sc_t_type=1"
                                     + " LEFT JOIN [ntust].[extra_teacher] et on sc.sc_t_id=et.t_id AND sc.sc_t_type=2", condi
-                                    , select: "(Case when t.t_name IS NULL then et.t_name else t.t_name End) as tname, (Case when t.t_id IS NULL then et.t_id else t.t_id End) tid, sc.sc_state status, sc.sc_id, sc.sc_t_type t_type");
+                                    , select: "(Case when t.t_name IS NULL then et.t_name else t.t_name End) as tname, (Case when t.t_id IS NULL then et.t_id else t.t_id End) tid, sc.sc_state status, sc.sc_id, sc.sc_t_type t_type, sc.sc_all_approval");
             if ((bool)returnValue["status"])
             {
                 returnJO["new"] = returnValue["data"];
             }
+            returnJO["sc_all_approval"] = returnValue["data"][0]["sc_all_approval"];
 
             return returnJO;
         }

@@ -105,7 +105,7 @@ namespace advisorSystem.Controllers
         {
             getRoleInfo();
 
-            JToken returnValue = adminHelper.getStudentInfo(Request.Form["sid"]);
+            JObject returnValue = adminHelper.getStudentInfo(Request.Form["sid"]);
 
             //returnValue.Add("main", Request.Form["main"]);
             //returnValue.Add("sub", Request.Form["sub"]);
@@ -206,8 +206,6 @@ namespace advisorSystem.Controllers
             //return update_change["status"].ToString(Formatting.None);
             return null;
         }
-
         
-        #endregion
     }
 }

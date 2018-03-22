@@ -159,9 +159,9 @@ namespace advisorSystem.lib
 
         }
 
-        public JToken getStudentInfo(string s_id)
+        public JObject getStudentInfo(string s_id)
         {
-            JToken returnJT = new JArray();
+            JObject returnJO = new JObject();
             JObject condi = new JObject();
             JObject returnValue = new JObject();
 
@@ -178,18 +178,16 @@ namespace advisorSystem.lib
 
             if (!(bool)returnValue["status"])
             {
-                return returnJT;
+                return returnJO;
 
             }
-            returnJT = returnValue["data"];
-            foreach (JObject jt in returnJT)
+            
+            foreach (JObject jt in returnValue["data"])
             {
-                jt["apply"] = studentSQL.getApplyResultForAdmin(s_id);
-                jt["change"] = studentSQL.getChangeResultForAdmin(s_id);
-
-
+                returnJO["apply"] = studentSQL.getApplyResultForAdmin(s_id);
+                returnJO["change"] = studentSQL.getChangeResultForAdmin(s_id); 
             }
-            return returnJT;
+            return returnJO;
 
         }
 
