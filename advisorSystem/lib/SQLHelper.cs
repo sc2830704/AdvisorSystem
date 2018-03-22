@@ -239,13 +239,13 @@ namespace advisorSystem.lib
 
         }
 
-        public JToken getPairTeacher()
+        public JToken getPairTeacher(string para_s_id=null)
         {
             JArray returnJA = new JArray();
             JObject condi = new JObject();
             JObject returnValue = new JObject();
 
-            condi["p_s_id"] = s_id;
+            condi["p_s_id"] = para_s_id==null?s_id: para_s_id;
             returnValue = sqlHelper.select("[ntust].[pair] p"
                                     + " JOIN [ntust].[teacher_group] tg on tg.tg_id=p.p_tg_id"
                                     + " LEFT JOIN [ntust].[teacher] t on t.t_id=tg.t_id", condi
@@ -391,6 +391,13 @@ namespace advisorSystem.lib
 
             int tgId = getNewTgId();
             int oriTgId = getOriTgId();
+
+            if (oriTgId == 0) {
+                JObject callback = new JObject();
+                callback["status"] = false;
+                callback["msg"] = "get ori tg id is fail";
+                return callback;
+            }
             /*insertData["sa_s_id"] = s_id;
             insertData["sa_t_id"] = main;
             insertData["sa_t_type"] = 1;
@@ -554,12 +561,12 @@ namespace advisorSystem.lib
                 System.Diagnostics.Debug.Print(data.ToString());
                 System.Diagnostics.Debug.Print("MAX=" + dataJO["max"].ToString());
 
-                return (int)dataJO["max"] + 1;
+                return (int)dataJO["max"];
                 //return dataJO.ToString();
             }
             else
             {
-                return 1;
+                return 0;
             }
         }
         

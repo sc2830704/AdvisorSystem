@@ -55,12 +55,12 @@ namespace advisorSystem.lib
 
             //condi["s_department"] = st_department;
 
-
+            //都LEFT JOIN表示 系所上未有老師的學生也要選擇
             returnValue = sqlHelper.select("(SELECT SUBSTRING(s.s_id, 1, 4) as sid_short from [ntust].[student] s" +
-                                                                " JOIN [ntust].[pair] p on s.s_id=p.p_s_id AND p.p_end_date IS NULL" +
-                                                                " JOIN [ntust].[teacher_group] tg on tg.tg_id=p.p_tg_id" +
-                                                                " JOIN [ntust].[teacher] t on tg.t_id=t.t_id" +
-                                                                " WHERE t.t_department=" + st_department + ") as ss", condi
+                                                                " LEFT JOIN [ntust].[pair] p on s.s_id=p.p_s_id AND p.p_end_date IS NULL" +
+                                                                " LEFT JOIN [ntust].[teacher_group] tg on tg.tg_id=p.p_tg_id" +
+                                                                " LEFT JOIN [ntust].[teacher] t on tg.t_id=t.t_id" +
+                                                                " WHERE t.t_department=" + st_department + " OR s.s_department=" + st_department + ") as ss", condi
                                     , "GROUP BY ss.sid_short", "ss.sid_short");
             if ((bool)returnValue["status"])
             {
@@ -80,7 +80,7 @@ namespace advisorSystem.lib
         public JToken getStudentList()
         {
             JToken semesterList = getStudentSemester();
-            JToken returnJT = new JArray();
+            JArray returnJT = new JArray();
             JObject condi = new JObject();
             JObject returnValue = new JObject();
             JObject studentJO;
@@ -100,7 +100,7 @@ namespace advisorSystem.lib
                 return returnJT;
 
             }
-            returnJT = returnValue["data"];
+            returnJT = (JArray)returnValue["data"];
             foreach (JObject jt in returnJT)
             {
                 foreach (string semester in semesterList)
@@ -154,6 +154,48 @@ namespace advisorSystem.lib
                 }
 
             }
+
+            //////////////////
+            JObject noTeacherStudent = new JObject();
+            foreach (string semester in semesterList)
+            {
+                noTeacherStudent[semester] = new JArray();
+            }
+            noTeacherStudent["phd"] = new JArray();
+            noTeacherStudent["pt_m"] = new JArray();
+            noTeacherStudent["history"] = new JArray();
+
+            condi = new JObject();
+            condi["s.s_department"] = st_department;
+            returnValue = sqlHelper.select("[ntust].[student] s" +
+                        " LEFT JOIN [ntust].[pair] p on s.s_id=p.p_s_id AND p.p_id IS NULL" +
+                        " LEFT JOIN (SELECT max(sse_event) now_status, sse_s_id FROM [ntust].[student_state_event] GROUP BY sse_s_id) sse on sse.sse_s_id=s.s_id", condi
+                                , select: "sse.now_status, s.s_id");
+            if ((bool)returnValue["status"])
+            {
+                foreach (JObject jo in returnValue["data"])
+                {
+                    studentJO = new JObject();
+                    s_id = (string)jo["s_id"];
+                    studentJO["sid"] = s_id;
+                    studentJO["status"] = jo["now_status"];
+                    if (s_id.Substring(0, 1) == "D")
+                    {
+                        ((JArray)noTeacherStudent["phd"]).Add(studentJO);
+                        continue;
+                    }
+                    if (s_id.Substring(6, 1) == "9")
+                    {
+                        ((JArray)noTeacherStudent["pt_m"]).Add(studentJO);
+                        continue;
+                    }
+                    ((JArray)noTeacherStudent[s_id.Substring(0, 4)]).Add(studentJO);
+                }
+            }
+            noTeacherStudent["tname"] = "無人認養";
+
+            returnJT.Add(noTeacherStudent);
+
             return returnJT;
 
 
@@ -174,7 +216,7 @@ namespace advisorSystem.lib
                                         " LEFT JOIN [ntust].[pair] p on s.s_id=p.p_s_id AND p.p_end_date IS NULL" +
                                         " LEFT JOIN [ntust].[teacher_group] tg on tg.tg_id=p.p_tg_id" +
                                         " LEFT JOIN [ntust].[teacher] t on tg.t_id=t.t_id", condi
-                                    , "", "s.s_id sid, s.s_name sname, t.t_name tname");
+                                    , "", "s.s_id sid, s.s_name sname, s.s_group, s.s_department, t.t_name tname");
 
             if (!(bool)returnValue["status"])
             {
@@ -183,8 +225,8 @@ namespace advisorSystem.lib
             }
             returnJO = (JObject)returnValue["data"][0];
             returnJO["apply"] = studentSQL.getApplyResultForAdmin(s_id);
-            returnJO["change"] = studentSQL.getChangeResultForAdmin(s_id); 
-            
+            returnJO["change"] = studentSQL.getChangeResultForAdmin(s_id);
+            returnJO["pairTeacher"] = studentSQL.getPairTeacher(s_id);
             return returnJO;
 
         }

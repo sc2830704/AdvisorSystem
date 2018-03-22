@@ -13,6 +13,7 @@ using advisorSystem.lib;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 
 namespace advisorSystem.Controllers
 {
@@ -61,6 +62,37 @@ namespace advisorSystem.Controllers
 
         public ActionResult Index()
         {
+
+            List<SelectListItem> items = new List<SelectListItem>();
+            items.Add(new SelectListItem { Text = "請選擇", Disabled = true, Selected = true });
+            JToken departmentList = commonSQL.getDepartmentList();
+            foreach (JToken jt in departmentList)
+            {
+                JObject tmpJO = (JObject)jt;
+                tmpJO["chinesDepart"] = translateDepartment((int)tmpJO["t_department"]);
+                items.Add(new SelectListItem { Text = (string)tmpJO["chinesDepart"], Value = (string)tmpJO["t_department"] });
+            }
+            items.Add(new SelectListItem { Text = "校外", Value = "0" });
+            ViewBag.departmentList = departmentList.ToString(Formatting.None);
+            ViewBag.departmentListItem = items;
+
+            JToken teacherList = commonSQL.getTeacherList();
+            foreach (JToken jt in teacherList)
+            {
+                JObject tmpJO = (JObject)jt;
+                tmpJO["chinesDepart"] = translateDepartment((int)tmpJO["t_department"]);
+            }
+            ViewBag.teacherList = teacherList.ToString(Formatting.None);
+            //ViewBag.mainTeacherListItem = items;
+
+            JToken outSideTeacherUnit = commonSQL.getOutSideTeacherUnit();
+            ViewBag.outSideTeacherUnit = outSideTeacherUnit.ToString(Formatting.None);
+
+            JToken ousSideTeacherList = commonSQL.getOusSideTeacherList();
+            ViewBag.ousSideTeacherList = ousSideTeacherList.ToString(Formatting.None);
+
+
+
             ViewBag.Message = "Link your mssql.";
             ViewBag.Depart = "電子";
             ViewBag.User = "我";
