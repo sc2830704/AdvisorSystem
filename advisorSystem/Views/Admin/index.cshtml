@@ -211,6 +211,7 @@
                     html += "原始指導教授:"+tname + "  操作 "+ text+"<br>";
                 }
                 for (var i in news) {
+                    console.log(news);
                     var tname = news[i]['tname'];
                     var status = news[i]['status'];
                     var text = '';
@@ -219,14 +220,14 @@
                     else
                         text = '<button onClick=\'acceptChange('
                             + '"' + news[i]['sc_id']
-                            + '"' + news[i]['org_tg_id']
-                            + '","' + 'null'
+                            + '","' + news[i]['org_tg_id']
+                            + '","' + news[i]['new_tg_id']
                             + '","' + sid
                             + '","' + tid
                             + '","' + sc_allapproval + '",1)\'>同意</button>' +
                             ' <button onClick=\'acceptChange('
                             + '"' + news[i]['sc_id']
-                            + '","' + 'null'
+                            + '","' + news[i]['new_tg_id']
                             + '","' + sid
                             + '","' + tid
                             + '","' + sc_allapproval + '",0)\'>不同意</button>'
@@ -279,11 +280,11 @@
         });
 
     }
-    function acceptChange(sc_id, org_tg_id, tg_id, s_id, t_id, sc_allapproval, accept) {
+    function acceptChange(sc_id, org_tg_id, new_tg_id, s_id, t_id, sc_allapproval, accept) {
         var data = {
             "sc_id": sc_id,
             "org_tg_id": org_tg_id,
-            "tg_id": tg_id,
+            "new_tg_id": new_tg_id,
             "s_id": s_id,
             "t_id": t_id,
             "thesis_state": 1,

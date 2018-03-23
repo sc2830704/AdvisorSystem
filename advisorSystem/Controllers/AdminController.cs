@@ -236,7 +236,7 @@ namespace advisorSystem.Controllers
                 //add new pair
                 adminHelper.AddApplyPair(tg_id, s_id);
                 //update student apply history
-                adminHelper.UpdateStudentApplyHistory(tg_id, state: 1); //state=1 means success
+                adminHelper.UpdateStudentApplyHistory(tg_id,state: 1); //state=1 means success
                 //update student apply status
                 adminHelper.UpdateStudentApplyStatus(s_id, state: 0); //state=0 means success
             }
@@ -254,11 +254,11 @@ namespace advisorSystem.Controllers
             //else
             //    return change["msg"].ToString();
         }
-        public String UpdateStudentChange(String sc_id, String org_tg_id, String tg_id, String s_id, String t_id, String thesis_state, String sc_allapproval, int accept)
+        public String UpdateStudentChange(String sc_id, String org_tg_id, String new_tg_id, String s_id, String t_id, String thesis_state, String sc_allapproval, int accept)
         {
             getRoleInfo();
             //update teacher accpet according to allapprove
-            JObject update_change = adminHelper.UpdateChange(sc_id, org_tg_id,s_id, t_id, thesis_state, sc_allapproval, accept);
+            JObject update_change = adminHelper.UpdateChange(sc_id, org_tg_id,s_id, t_id, adminId, thesis_state, sc_allapproval, accept);
             
 
             /*check if all original teacher agree for change advisor*/
@@ -267,13 +267,13 @@ namespace advisorSystem.Controllers
             {
                 // checkallapply get 0 means all student_apply is accepted
                 // then update student apply allapprove to 1
-                adminHelper.UpdateStudentChangeApproval(tg_id);
+                adminHelper.UpdateStudentChangeApproval(new_tg_id);
 
             }
-            else if (sc_allapproval.Equals("1") && adminHelper.CheckNewChange(tg_id) == 0)
+            else if (sc_allapproval.Equals("1") && adminHelper.CheckNewChange(new_tg_id) == 0)
             {
-                //remove original pair
-                adminHelper.removePair(s_id);
+                //update original pair since it's expired
+                adminHelper.UpdateOrgPair(org_tg_id);
                 //add new paired
                 adminHelper.AddChangePair(sc_id, s_id);
                 //update student change history

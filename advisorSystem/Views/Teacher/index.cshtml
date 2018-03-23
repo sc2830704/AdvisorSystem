@@ -69,7 +69,7 @@
         for (var i in _studentChangeJSONObjs) {
             //原本老師還沒全部同意
             if (_studentChangeJSONObjs[i]["sc_all_approval"] == '0') {
-                if (_studentChangeJSONObjs[i]["scota_state"] == '0')
+                if (_studentChangeJSONObjs[i]["scota_state"] == '0') {
                     //sc_id, s_id, t_id, scota_thesis_state, sc_allapproval, accept
                     var _opHtml = '<button type="button" onclick=\'acceptChange("'
                         + _studentChangeJSONObjs[i]['sc_id']
@@ -87,11 +87,13 @@
                         + '","' + _studentChangeJSONObjs[i]['scota_t_id']
                         + '","' + _studentChangeJSONObjs[i]['sc_all_approval']
                         + '",2)\'>拒絕</button>';
+                }
                 else
                     var _opHtml = "等待其他老師同意中";    
             }
             //原本老師已經都同意，讓新老師操作
             else {
+                console.log(_studentChangeJSONObjs[i]);
                 if (_studentChangeJSONObjs[i]["scota_state"] == "")
                     var _opHtml = '<button type="button" onclick=\'acceptChange("'
                         + _studentChangeJSONObjs[i]['sc_id']

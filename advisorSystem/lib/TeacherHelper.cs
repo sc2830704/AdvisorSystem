@@ -89,7 +89,7 @@ namespace advisorSystem.lib
         {
             sqlHelper = new SQLHelper();
 
-            return sqlHelper.select("SELECT DISTINCT  sc.sc_id, sc.sc_t_id, sc.sc_s_id, s.s_name, hsc.hsc_create_datetime, sc.sc_tg_id, hsc.hsc_origin_tg_id, t.t_name AS new_teacher, " +
+            return sqlHelper.select("SELECT DISTINCT  sc.sc_id, scota.scota_t_id,sc.sc_t_id, sc.sc_s_id, s.s_name, hsc.hsc_create_datetime, sc.sc_tg_id, hsc.hsc_origin_tg_id, t.t_name AS new_teacher, " +
                                 "STUFF " +
                                 "((SELECT  ', ' + org_t.t_name " +
                                 "FROM ntust.teacher_group as org_tg " +
@@ -122,15 +122,12 @@ namespace advisorSystem.lib
             String query = "UPDATE hsc set hsc_end_datetime='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "' ,hsc_state=" + state + "  FROM ntust.history_student_change hsc WHERE hsc_origin_tg_id = " + tg_id;
             sqlHelper.update(query);
         }
-        public void removePair(string s_id)
+        public void UpdateOrgPair(string org_tg_id)
         {
             sqlHelper = new SQLHelper();
-            //String query = "DELETE FROM ntust.pair WHERE s_id =  "+s_id;
-            JObject data = new JObject();
-            data.Add("s_id", s_id);
-            String table = "ntust.pair";
-            sqlHelper.delete(table, data);
-            //sqlHelper.delete(query);
+            String queryStr = "UPDATE p set p_end_date='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "'  FROM ntust.pair p WHERE p.p_tg_id = "+ org_tg_id;
+            sqlHelper.update(queryStr);
+            
         }
 
         public JObject UpdateApply(String tg_id, int accept)
@@ -210,15 +207,14 @@ namespace advisorSystem.lib
             String query;
             if (allapprove.Equals("0")) //更新原本老師的表(scota)
             {
-                query = " UPDATE scota set scota_state = "+accept+",scota_thesis_state="+ thesis_state + 
-                            ", scota_check_by_type=1, scota_check_by_st_id='"+ t_id + "' " +
+                query = " UPDATE scota set scota_state = "+accept+",scota_thesis_state="+ thesis_state + ", scota_check_by_type=1 "+
                            " FROM ntust.student_change_origin_teacher_approval scota" +
                            " WHERE scota.scota_tg_id ='" + org_tg_id + "' AND scota.scota_t_id = '" + t_id + "'";
                 //檢查是否原本老師全部同意:如果是就更新allapproval=1
             }
             else //更新 申請新老師的表(sc)
             {
-                query = " UPDATE sc set sc.sc_state = " + accept + ", sc.sc_check_by_type = 1, sc_check_by_st_id = '" + t_id +"'"+
+                query = " UPDATE sc set sc.sc_state = " + accept + ", sc.sc_check_by_type = 1 "+
                            " FROM ntust.student_change sc" +
                            " WHERE sc.sc_id ='" + sc_id + "' AND sc.sc_t_id = '" + t_id + "'";
             }
@@ -231,7 +227,7 @@ namespace advisorSystem.lib
             sqlHelper = new SQLHelper();
             String query = "UPDATE sc set sc.sc_all_approval = 1 "+
                             "FROM ntust.student_change sc "+
-                            "WHERE sc.tg_id = " + tg_id;
+                            "WHERE sc.sc_tg_id = " + tg_id;
             JObject updateSCA = sqlHelper.update(query);
             return updateSCA;
         }

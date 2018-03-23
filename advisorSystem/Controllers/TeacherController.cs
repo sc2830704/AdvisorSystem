@@ -140,8 +140,8 @@ namespace advisorSystem.Controllers
 
             }else if(sc_allapproval.Equals("1") && teacherHelper.CheckNewChange(tg_id) == 0)
             {
-                //remove original pair
-                teacherHelper.removePair(s_id);
+                //update original pair since it's expired
+                teacherHelper.UpdateOrgPair(org_tg_id);
                 //add new paired
                 teacherHelper.AddChangePair(sc_id, s_id);
                 //update student change history
