@@ -252,6 +252,7 @@ namespace advisorSystem.lib
             JObject returnValue = new JObject();
 
             condi["p_s_id"] = para_s_id==null?s_id: para_s_id;
+            condi["p_end_date"] = "null";
             returnValue = sqlHelper.select("[ntust].[pair] p"
                                     + " JOIN [ntust].[teacher_group] tg on tg.tg_id=p.p_tg_id"
                                     + " LEFT JOIN [ntust].[teacher] t on t.t_id=tg.t_id", condi
