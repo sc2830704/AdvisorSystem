@@ -28,6 +28,7 @@ namespace advisorSystem.Controllers
         private JObject adminInfo;
         CommonSQL commonSQL = new CommonSQL();
         AdminHelper adminHelper = new AdminHelper();
+        StudentSQL studentSQL = new StudentSQL();
 
         public AdminController()
         {
@@ -146,7 +147,23 @@ namespace advisorSystem.Controllers
             return returnValue.ToString();
         }
 
-        
+
+        // POST: /admin/StudentChange
+        [HttpPost]
+        public string StudentChange()
+        {
+            getRoleInfo();
+
+            JObject condi = new JObject();
+            condi["s_u_id"] = userId;
+            JObject returnValue = studentSQL.studentChange(Request.Form["main"], JArray.Parse(Request.Form["sub"]), Request.Form["s_id"]);
+
+            //returnValue.Add("main", Request.Form["main"]);
+            //returnValue.Add("sub", Request.Form["sub"]);
+            //returnValue.Add("success", true);
+
+            return returnValue.ToString();
+        }
 
         public AdminController(ApplicationUserManager userManager, ApplicationSignInManager signInManager )
         {

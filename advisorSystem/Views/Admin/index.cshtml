@@ -347,6 +347,7 @@
     }
     function changeTeacher(sid,s_group,s_department) {
         //to-do 更改指導教授
+        $.modify_s_id = sid;
         var html = "";
         $.each($.teacherList,function(k,v){
             if (v["t_department"]== s_department&& v["t_group"] == s_group) {
@@ -402,10 +403,11 @@
                                         $.ajax({
                                             type:"POST",
                                             dataType: "text",
-                                            url: "/Student/StudentChange",
+                                            url: "/admin/StudentChange",
                                             data: {
                                                 main: $("#mainTeacherListItem").val() ,
-                                                sub: JSON.stringify(subTeacher)
+                                                sub: JSON.stringify(subTeacher) ,
+                                                s_id: $.modify_s_id
                                             },
                                             success: function(data){
                                                 data = JSON.parse(data);

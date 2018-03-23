@@ -149,12 +149,15 @@ namespace advisorSystem.lib
 
             condi = new JObject();
             condi["p.p_s_id"] = par_s_id;
+            condi["p.p_end_date"] = "null";
             returnValue = sqlHelper.select("[ntust].[pair] p"
                                     + " JOIN [ntust].[student_change_origin_teacher_approval] scota on scota.scota_tg_id=p.p_tg_id"
                                     + " JOIN [ntust].[teacher_group] tg on tg.tg_id=p.p_tg_id"
                                     + " LEFT JOIN [ntust].[teacher] t on tg.t_id=t.t_id AND tg.t_type=1"
                                     + " LEFT JOIN [ntust].[extra_teacher] et on tg.t_id=et.t_id AND tg.t_type=2", condi
-                                    , select: "tg.tg_id as tg_id, (Case when t.t_name IS NULL then et.t_name else t.t_name End) tname, (Case when t.t_id IS NULL then et.t_id else t.t_id End) tid, scota.scota_state status, scota.scota_thesis_state, scota.scota_state, tg.t_type t_type");
+                                    , select: "tg.tg_id as org_tg_id,'"+ sc_tg_id + "' as new_tg_id, (Case when t.t_name IS NULL then et.t_name else t.t_name End) tname" +
+                                            ", (Case when t.t_id IS NULL then et.t_id else t.t_id End) tid" +
+                                            ", scota.scota_state status, scota.scota_thesis_state, scota.scota_state, tg.t_type t_type");
             if ((bool)returnValue["status"])
             {
                 returnJO["old"] = returnValue["data"];
@@ -164,9 +167,12 @@ namespace advisorSystem.lib
             condi["sc_s_id"] = par_s_id;
             condi["sc_tg_id"] = sc_tg_id;
             returnValue = sqlHelper.select("[ntust].[student_change] sc"
+                                    + " JOIN [ntust].[pair] p on p.p_end_date is null AND sc.sc_s_id=p.p_s_id"
                                     + " LEFT JOIN [ntust].[teacher] t on sc.sc_t_id=t.t_id AND sc.sc_t_type=1"
                                     + " LEFT JOIN [ntust].[extra_teacher] et on sc.sc_t_id=et.t_id AND sc.sc_t_type=2", condi
-                                    , select: "(Case when t.t_name IS NULL then et.t_name else t.t_name End) as tname, (Case when t.t_id IS NULL then et.t_id else t.t_id End) tid, sc.sc_state status, sc.sc_id, sc.sc_t_type t_type, sc.sc_all_approval");
+                                    , select: "(Case when t.t_name IS NULL then et.t_name else t.t_name End) as tname" +
+                                            ", (Case when t.t_id IS NULL then et.t_id else t.t_id End) tid, sc.sc_state status" +
+                                            ", sc.sc_id, sc.sc_t_type t_type, sc.sc_all_approval, sc.sc_tg_id new_tg_id, p.p_tg_id org_tg_id");
             if ((bool)returnValue["status"])
             {
                 returnJO["new"] = returnValue["data"];
@@ -382,7 +388,7 @@ namespace advisorSystem.lib
         }
 
         //Request.Form["main"], Request.Form["sub"]
-        public JObject studentChange(string main, JToken sub)
+        public JObject studentChange(string main, JToken sub, string para_s_id=null)
         {
             //JObject insertData = new JObject();
             JArray insertData = new JArray();
@@ -390,7 +396,7 @@ namespace advisorSystem.lib
             SQLHelper sqlHelper = new SQLHelper();
 
             int tgId = getNewTgId();
-            int oriTgId = getOriTgId();
+            int oriTgId = getOriTgId(para_s_id);
 
             if (oriTgId == 0) {
                 JObject callback = new JObject();
@@ -398,6 +404,7 @@ namespace advisorSystem.lib
                 callback["msg"] = "get ori tg id is fail";
                 return callback;
             }
+            string s_id_value = para_s_id == null ? s_id : para_s_id;
             /*insertData["sa_s_id"] = s_id;
             insertData["sa_t_id"] = main;
             insertData["sa_t_type"] = 1;
@@ -409,7 +416,7 @@ namespace advisorSystem.lib
 
             JObject insertObj = new JObject();
             JObject insertObj2 = new JObject();
-            insertObj["sc_s_id"] = s_id;
+            insertObj["sc_s_id"] = s_id_value;
             insertObj["sc_t_id"] = main;
             insertObj["sc_t_type"] = 1;
             insertObj["sc_tg_id"] = tgId;
@@ -429,7 +436,7 @@ namespace advisorSystem.lib
             {
                 JObject tmp = (JObject)x;
                 insertObj = new JObject();
-                insertObj["sc_s_id"] = s_id;
+                insertObj["sc_s_id"] = s_id_value;
                 insertObj["sc_t_id"] = tmp["t_id"];
                 insertObj["sc_t_type"] = tmp["t_type"];
                 insertObj["sc_tg_id"] = tgId;
@@ -471,7 +478,7 @@ namespace advisorSystem.lib
             DateTime myDateTime = DateTime.Now;
             string sqlFormattedDate = myDateTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
             insertObj = new JObject();
-            insertObj["hsc_s_id"] = s_id;
+            insertObj["hsc_s_id"] = s_id_value;
             insertObj["hsc_origin_tg_id"] = oriTgId;
             insertObj["hsc_tg_id"] = tgId;
             insertObj["hsc_create_datetime"] = sqlFormattedDate;
@@ -484,18 +491,18 @@ namespace advisorSystem.lib
 
             //check student_apply_status exist
             JObject condi = new JObject();
-            condi["sas_s_id"] = s_id;
+            condi["sas_s_id"] = s_id_value;
             returnValue = sqlHelper.select("[ntust].[student_apply_status]", condi);
 
             if ((bool)returnValue["status"])
             {
-                query = "UPDATE ntust.student_apply_status set sas_tg_id=" + tgId + " ,sas_type=2 WHERE sas_s_id = '" + s_id + "'";
+                query = "UPDATE ntust.student_apply_status set sas_tg_id=" + tgId + " ,sas_type=2 WHERE sas_s_id = '" + s_id_value + "'";
                 returnValue = sqlHelper.update(query);
             }
             else
             {
                 JObject insertData3 = new JObject();
-                insertData3["sas_s_id"] = s_id;
+                insertData3["sas_s_id"] = s_id_value;
                 insertData3["sas_type"] = 2;
                 insertData3["sas_tg_id"] = tgId;
                 returnValue = sqlHelper.insert("[ntust].[student_apply_status]", insertData3);
@@ -547,11 +554,11 @@ namespace advisorSystem.lib
         }
 
 
-        public int getOriTgId()
+        public int getOriTgId(string para_s_id = null)
         {
             SQLHelper sqlHelper = new SQLHelper();
             JObject condi = new JObject();
-            condi["p_s_id"] = s_id;
+            condi["p_s_id"] = para_s_id==null?s_id: para_s_id;
             JObject returnValue = sqlHelper.select("[ntust].[pair]", condi, "ORDER BY p_tg_id DESC ", "top 1 p_tg_id as max");
             if ((bool)returnValue["status"])
             {
@@ -637,7 +644,7 @@ namespace advisorSystem.lib
 
     public class SQLHelper
     {
-        public static string connString = System.Configuration.ConfigurationManager.ConnectionStrings["DefaultConnection"].ToString();
+        public static string connString = System.Configuration.ConfigurationManager.ConnectionStrings["RaymondConnection"].ToString();
 
         public SqlConnection cn;
 
@@ -655,7 +662,10 @@ namespace advisorSystem.lib
             String whereCondi = "WHERE ";
             foreach (var x in dataArr)
             {
-                whereCondi += x.Key + "='"+x.Value+"' AND ";
+                if((string)x.Value=="null")
+                    whereCondi += x.Key + " is " + x.Value + " AND ";
+                else
+                    whereCondi += x.Key + "='"+x.Value+"' AND ";
             }
             whereCondi = whereCondi.Length==6?"":whereCondi.Substring(0, whereCondi.Length - 4);
 
