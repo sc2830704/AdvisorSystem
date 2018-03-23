@@ -336,6 +336,7 @@
     }
     function changeTeacher(sid,s_group,s_department) {
         //to-do 更改指導教授
+        $.modify_s_id = sid;
         var html = "";
         $.each($.teacherList,function(k,v){
             if (v["t_department"]== s_department&& v["t_group"] == s_group) {
@@ -391,10 +392,11 @@
                                         $.ajax({
                                             type:"POST",
                                             dataType: "text",
-                                            url: "/Student/StudentChange",
+                                            url: "/admin/StudentChange",
                                             data: {
                                                 main: $("#mainTeacherListItem").val() ,
-                                                sub: JSON.stringify(subTeacher)
+                                                sub: JSON.stringify(subTeacher) ,
+                                                s_id: $.modify_s_id
                                             },
                                             success: function(data){
                                                 console.log(data);
@@ -463,7 +465,7 @@
 
 
 <!-- ui-dialog -->
-<div id="dialogForChange" title="指導教授變更申請">
+<div id="dialogForChange" title="指導教授變更申請" hidden>
 	    <div>注意事項</div>
         <div>1.變更指導教授申請，須獲得所有指導教授同意。</div>
         <div>2.申請後須等待所有指導教授進入系統確認方能生效。</div>
@@ -524,7 +526,7 @@
             </span>
         </div>
 </div>
-<div id="dialogForChangeApply" title="指導教授變更申請">
+<div id="dialogForChangeApply" title="指導教授變更申請" hidden>
     <div>
 	    <span>將指導教授由 </span>
 	    <span id="oriTeacher"></span>

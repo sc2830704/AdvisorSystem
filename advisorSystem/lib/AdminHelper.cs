@@ -167,8 +167,9 @@ namespace advisorSystem.lib
 
             condi = new JObject();
             condi["s.s_department"] = st_department;
-            returnValue = sqlHelper.select("[ntust].[student] s" +
-                        " LEFT JOIN [ntust].[pair] p on s.s_id=p.p_s_id AND p.p_id IS NULL" +
+            condi["p.p_id"] = "null";
+           returnValue = sqlHelper.select("[ntust].[student] s" +
+                        " LEFT JOIN [ntust].[pair] p on s.s_id=p.p_s_id" +
                         " LEFT JOIN (SELECT max(sse_event) now_status, sse_s_id FROM [ntust].[student_state_event] GROUP BY sse_s_id) sse on sse.sse_s_id=s.s_id", condi
                                 , select: "sse.now_status, s.s_id");
             if ((bool)returnValue["status"])
