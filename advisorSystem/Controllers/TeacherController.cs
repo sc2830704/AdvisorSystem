@@ -121,7 +121,7 @@ namespace advisorSystem.Controllers
             //else
             //    return change["msg"].ToString();
         }
-        public String UpdateStudentChange(String sc_id, String org_tg_id, String s_id, String t_id, String thesis_state, String sc_allapproval, int accept)
+        public String UpdateStudentChange(String sc_id, String org_tg_id, String tg_id, String s_id, String t_id, String thesis_state, String sc_allapproval, int accept)
         {
             getRoleInfo();
 
@@ -136,9 +136,9 @@ namespace advisorSystem.Controllers
             {
                 // CheckAllApply get 0 means all student_apply is accepted
                 // then update student apply allapprove to 1
-                teacherHelper.UpdateStudentChangeApproval(sc_id);
+                teacherHelper.UpdateStudentChangeApproval(tg_id);
 
-            }else if(sc_allapproval.Equals("1") && teacherHelper.CheckNewChange(org_tg_id) == 0)
+            }else if(sc_allapproval.Equals("1") && teacherHelper.CheckNewChange(tg_id) == 0)
             {
                 //remove original pair
                 teacherHelper.removePair(s_id);

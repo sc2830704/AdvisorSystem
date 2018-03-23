@@ -147,7 +147,6 @@
         tableStudent.draw();
     }
     function loadStudentInfo(sid) {
-
         tableStudentInfo.clear().draw();
         var s_info = { "sid": sid };
         $.ajax({
@@ -165,7 +164,6 @@
                     '<button onClick="changeTeacher(\'' + data['sid']+'\',\'' + data['s_group']+'\',\'' + data['s_department']+'\')">更改指導教授</button>'
                 ]);
                 var sid = data['sid'];
-                var sc_allapproval = data['sc_allapproval'];
                 //get student apply
                 var apply = data['apply'];
                 var html = '';
@@ -175,9 +173,8 @@
                     var tg_id = apply[i]['sa_tg_id'];
                     var tid = apply[i]['tid'];
                     var text = '';
-                    console.log(apply[i]);
                     if (status == "1")
-                        text = '等待請他老師確認';
+                        text = '等待其他老師確認';
                     else
                         text = '<button onClick=\'acceptApply("' + tg_id + '","' + sid + '","' + tid
                             + '",1)\'>同意</button> <button onClick=\'acceptApply("' + tg_id + '","' + sid
@@ -185,31 +182,33 @@
                     html += tname +"   "+ text+"</br>";
                 }
                 $("#apply").html(html);
-                console.log(data);
                 //get student change
                 html = '';
                 var olds = data['change']['old'];
                 var news = data['change']['new'];
+                var sc_allapproval = data['change']['sc_all_approval'];
                 for (var i in olds) {
                     var tname = olds[i]['tname'];
                     var status = olds[i]['status'];
+                    var tid = olds[i]['tid'];
                     var text = '';
                     if (status == 1)
-                        text = '等待請他老師確認';
+                        text = '等待其他老師確認';
                     else
-                        text = '<button onClick="acceptChange('
+                        text = '<button onClick=\'acceptChange('
                             + '"' + 'null'
-                            + '","' + olds[i]['sa_tg_id']
+                            + '","' + olds[i]['org_tg_id']
+                            + '","' + olds[i]['new_tg_id']
                             + '","' + sid
                             + '","' + tid
-                            + '","' + sc_allapproval + '1)">同意</button>' +
-                            ' <button onClick="acceptChange('
+                            + '","' + sc_allapproval + '",1)\'>同意</button>' +
+                            ' <button onClick=\'acceptChange('
                             + '"' + 'null'
-                            + '","' + olds[i]['sa_tg_id']
+                            + '","' + olds[i]['tg_id']
                             + '","' + sid
                             + '","' + tid
-                            + '","' + sc_allapproval + '0)">不同意</button>'
-                    html += tname + text+"<br>";
+                            + '","' + sc_allapproval + '",0)\'>不同意</button>'
+                    html += "原始指導教授:"+tname + "  操作 "+ text+"<br>";
                 }
                 for (var i in news) {
                     var tname = news[i]['tname'];
@@ -218,19 +217,20 @@
                     if (status == "1")
                         text = '等待其他老師確認';
                     else
-                        text = '<button onClick="acceptChange('
+                        text = '<button onClick=\'acceptChange('
+                            + '"' + news[i]['sc_id']
+                            + '"' + news[i]['org_tg_id']
+                            + '","' + 'null'
+                            + '","' + sid
+                            + '","' + tid
+                            + '","' + sc_allapproval + '",1)\'>同意</button>' +
+                            ' <button onClick=\'acceptChange('
                             + '"' + news[i]['sc_id']
                             + '","' + 'null'
                             + '","' + sid
                             + '","' + tid
-                            + '","' + sc_allapproval + '1)">同意</button>' +
-                            ' <button onClick="acceptChange('
-                            + '"' + news[i]['sc_id']
-                            + '","' + 'null'
-                            + '","' + sid
-                            + '","' + tid
-                            + '","' + sc_allapproval + '0)">不同意</button>'
-                    html += tname + text + "</br>" ;
+                            + '","' + sc_allapproval + '",0)\'>不同意</button>'
+                    html += "新指導教授:" + tname + "  操作 " +  text + "</br>" ;
                 }
                 
                 $("#change").html(html);
@@ -265,8 +265,9 @@
                         data: data,
                         dataType: "json",
                         success: function (data) {
-                            console.log(data);
+                            console.log("success");
                             loadStudentInfo(s_id);
+                            getStudentList();
                         }
                     })
                 },
@@ -278,36 +279,46 @@
         });
 
     }
-    function acceptChange(sc_id, org_tg_id, s_id, t_id, sc_allapproval, accept) {
+    function acceptChange(sc_id, org_tg_id, tg_id, s_id, t_id, sc_allapproval, accept) {
         var data = {
             "sc_id": sc_id,
             "org_tg_id": org_tg_id,
+            "tg_id": tg_id,
             "s_id": s_id,
             "t_id": t_id,
             "thesis_state": 1,
             "sc_allapproval": sc_allapproval,
             "accept": accept
         }
-        console.log("data");
-        console.log(data);
         $("#dialog-acceptChange").dialog({
             resizable: false,
             height: "auto",
             width: 400,
             modal: true,
             buttons: {
-                "同意": function () {
+                "同意論文共用主題": function () {
                     $(this).dialog("close");
-                    UpdateStudentChange(data);
+                    UpdateStudentChange(data, s_id);
                 },
-                "不同意": function () {
+                "不同意論文共用主題": function () {
                     data.thesis_state = 2;
                     $(this).dialog("close");
-                    UpdateStudentChange(data);
+                    UpdateStudentChange(data, s_id);
                 }
             }
         });
 
+    }
+    function UpdateStudentChange(data, sid) {
+        $.ajax({
+            type: "POST",
+            url: "/admin/UpdateStudentChange",
+            data: data,
+            dataType: "json",
+            success: function (data) {
+                loadStudentInfo(sid);
+            }
+        })
     }
     function getStudnetClickEvent(stu) {
         var html = '';
@@ -321,7 +332,7 @@
     }
     function dialogStudnetInfo(sid) {
         loadStudentInfo(sid);
-        $("#dialog-acceptChange").dialog({
+        $("#dialog-studentinfo").dialog({
             resizable: false,
             height: 600,
             width: 1020,
@@ -397,7 +408,6 @@
                                                 sub: JSON.stringify(subTeacher)
                                             },
                                             success: function(data){
-                                                console.log(data);
                                                 data = JSON.parse(data);
                                                 if( data.status ) {
                                                         alert( "申請成功，請等待教授確認" );
@@ -441,7 +451,7 @@
 </h3>
 <table id="table"></table>
 <p><h5>學號紅色為休學，底線為外籍生</h5></p>
-<div id="dialog-acceptChange" title="學生資訊" hidden>
+<div id="dialog-studentinfo" title="學生資訊" hidden>
 
     <table id="tableStudentInfo">
         <thead>
@@ -460,10 +470,12 @@
     <p><h4>異動申請</h4></p>
     <div id="change">    </div>
 </div>
+<div id="dialog-acceptChange" title="學生資訊" hidden>
 
+</div>
 
 <!-- ui-dialog -->
-<div id="dialogForChange" title="指導教授變更申請">
+<div id="dialogForChange" title="指導教授變更申請" hidden>
 	    <div>注意事項</div>
         <div>1.變更指導教授申請，須獲得所有指導教授同意。</div>
         <div>2.申請後須等待所有指導教授進入系統確認方能生效。</div>
@@ -524,7 +536,7 @@
             </span>
         </div>
 </div>
-<div id="dialogForChangeApply" title="指導教授變更申請">
+<div id="dialogForChangeApply" title="指導教授變更申請" hidden>
     <div>
 	    <span>將指導教授由 </span>
 	    <span id="oriTeacher"></span>

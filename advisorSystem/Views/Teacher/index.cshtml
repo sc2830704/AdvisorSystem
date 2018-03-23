@@ -73,14 +73,16 @@
                     //sc_id, s_id, t_id, scota_thesis_state, sc_allapproval, accept
                     var _opHtml = '<button type="button" onclick=\'acceptChange("'
                         + _studentChangeJSONObjs[i]['sc_id']
-                        + '","'+ _studentChangeJSONObjs[i]['hsc_origin_tg_id']
+                        + '","' + _studentChangeJSONObjs[i]['hsc_origin_tg_id']
+                        + '","' + _studentChangeJSONObjs[i]['sc_tg_id']
                         + '","' + _studentChangeJSONObjs[i]['sc_s_id']
                         + '","' + _studentChangeJSONObjs[i]['scota_t_id']
                         + '","' + _studentChangeJSONObjs[i]['sc_all_approval']
-                        + '",1)\'>同意</button>'
+                        + '", 1)\'>同意</button>'
                         + ' <button type="button"onclick=\'acceptChange("'
                         + _studentChangeJSONObjs[i]['sc_id']
                         + '","' + _studentChangeJSONObjs[i]['hsc_origin_tg_id']
+                        + '","' + _studentChangeJSONObjs[i]['sc_tg_id']
                         + '","' + _studentChangeJSONObjs[i]['sc_s_id']
                         + '","' + _studentChangeJSONObjs[i]['scota_t_id']
                         + '","' + _studentChangeJSONObjs[i]['sc_all_approval']
@@ -94,6 +96,7 @@
                     var _opHtml = '<button type="button" onclick=\'acceptChange("'
                         + _studentChangeJSONObjs[i]['sc_id']
                         + '","' + _studentChangeJSONObjs[i]['hsc_origin_tg_id']
+                        + '","' + _studentChangeJSONObjs[i]['sc_tg_id']
                         + '","' + _studentChangeJSONObjs[i]['sc_s_id']
                         + '","' + _studentChangeJSONObjs[i]['sc_t_id']
                         + '","' + _studentChangeJSONObjs[i]['sc_all_approval']
@@ -101,6 +104,7 @@
                         + ' <button type="button"onclick=\'acceptChange("'
                         + _studentChangeJSONObjs[i]['sc_id']
                         + '","' + _studentChangeJSONObjs[i]['hsc_origin_tg_id']
+                        + '","' + _studentChangeJSONObjs[i]['sc_tg_id']
                         + '","' + _studentChangeJSONObjs[i]['sc_s_id']
                         + '","' + _studentChangeJSONObjs[i]['sc_t_id']
                         + '","' + _studentChangeJSONObjs[i]['sc_all_approval']
@@ -240,10 +244,11 @@
         
         
     }
-    function acceptChange(sc_id, org_tg_id, s_id, t_id, sc_allapproval, accept) {
+    function acceptChange(sc_id, org_tg_id, tg_id, s_id, t_id, sc_allapproval, accept) {
         var data = {
             "sc_id": sc_id,
             "org_tg_id": org_tg_id,
+            "tg_id": tg_id,
             "s_id": s_id,
             "t_id": t_id,
             "thesis_state": 1,

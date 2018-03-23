@@ -89,7 +89,7 @@ namespace advisorSystem.lib
         {
             sqlHelper = new SQLHelper();
 
-            return sqlHelper.select("SELECT DISTINCT  sc.sc_id, sc.sc_t_id, sc.sc_s_id, s.s_name, hsc.hsc_create_datetime,hsc.hsc_origin_tg_id, t.t_name AS new_teacher, " +
+            return sqlHelper.select("SELECT DISTINCT  sc.sc_id, sc.sc_t_id, sc.sc_s_id, s.s_name, hsc.hsc_create_datetime, sc.sc_tg_id, hsc.hsc_origin_tg_id, t.t_name AS new_teacher, " +
                                 "STUFF " +
                                 "((SELECT  ', ' + org_t.t_name " +
                                 "FROM ntust.teacher_group as org_tg " +
@@ -169,13 +169,13 @@ namespace advisorSystem.lib
             JObject updateStatus = sqlHelper.select(query);
             return Convert.ToInt32(updateStatus["data"][0]["count"]);
         }
-        public int CheckNewChange(String org_tg_id)
+        public int CheckNewChange(String tg_id)
         {
             sqlHelper = new SQLHelper();
             //query for apply which not agree 
             String query = "SELECT COUNT(*) AS count " +
-                        "FROM ntust.student_change_origin_teacher_approval scota " +
-                        "WHERE scota.scota_tg_id = " + org_tg_id + " AND scota.scota_state!=1";
+                        "FROM ntust.student_change sc " +
+                        "WHERE sc.sc_tg_id = " + tg_id + " AND sc.sc_state!=1";
             JObject updateStatus = sqlHelper.select(query);
             return Convert.ToInt32(updateStatus["data"][0]["count"]);
         }
@@ -225,13 +225,13 @@ namespace advisorSystem.lib
             JObject updateChange = sqlHelper.update(query);
             return updateChange;
         }
-        public JObject UpdateStudentChangeApproval(String sc_id)
+        public JObject UpdateStudentChangeApproval(String tg_id)
         {
 
             sqlHelper = new SQLHelper();
             String query = "UPDATE sc set sc.sc_all_approval = 1 "+
                             "FROM ntust.student_change sc "+
-                            "WHERE sc.sc_id = "+sc_id;
+                            "WHERE sc.tg_id = " + tg_id;
             JObject updateSCA = sqlHelper.update(query);
             return updateSCA;
         }
