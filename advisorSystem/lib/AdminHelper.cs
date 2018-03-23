@@ -141,8 +141,9 @@ namespace advisorSystem.lib
                     }
                 }
 
-                returnValue = sqlHelper.select("[ntust].[teacher] t" +
-                            " LEFT JOIN ntust.teacher_group tg on tg.t_id=t.t_id" +
+                /*returnValue = sqlHelper.select("[ntust].[teacher] t" +
+                            " JOIN ntust.teacher_group tg on tg.t_id=t.t_id" +
+                            " JOIN ntust.history_student_change hsc on hsc.hsc_origin_tg_id=tg.tg_id" +
                             " JOIN [ntust].[pair] p on tg.tg_id=p.p_tg_id", condi
                                     , select: "p.p_end_date, p.p_end_date , p.p_s_id");
                 if ((bool)returnValue["status"])
@@ -151,7 +152,7 @@ namespace advisorSystem.lib
                     {
 
                     }
-                }
+                }*/
 
             }
 
@@ -364,3 +365,4 @@ namespace advisorSystem.lib
         }
     }
 }
+ 
