@@ -44,6 +44,7 @@ namespace advisorSystem.Controllers
             System.Diagnostics.Debug.Print("user id " + tid);
             //get teacher student
             JObject studnetlist = teacherHelper.GetStudent();
+            ViewBag.tname = teacherInfo["t_name"];
 
             if ((bool)studnetlist["status"])
             {

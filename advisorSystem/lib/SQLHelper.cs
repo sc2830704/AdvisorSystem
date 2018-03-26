@@ -645,7 +645,7 @@ namespace advisorSystem.lib
 
     public class SQLHelper
     {
-        public static string connString = System.Configuration.ConfigurationManager.ConnectionStrings["RaymondConnection"].ToString();
+        public static string connString = System.Configuration.ConfigurationManager.ConnectionStrings["DefaultConnection"].ToString();
 
         public SqlConnection cn;
 
@@ -1133,33 +1133,41 @@ namespace advisorSystem.lib
 
             queryResult["status"] = true;
             System.Diagnostics.Debug.Print(queryStr);
-
-            using (cn)
+            try
             {
-
-                //2.開啟資料庫
-                cn.Open();
-                //3.引用SqlCommand物件
-                SqlCommand command = new SqlCommand(queryStr, cn);
-
-                using (SqlDataReader dr = command.ExecuteReader())
+                using (cn)
                 {
-                    while (dr.Read())
-                    {
-                        data.Add(new JObject());
-                        for (int i = 0; i < dr.FieldCount; ++i)
-                        {
-                            data[data.Count - 1][dr.GetName(i)] = dr[i].ToString();
-                        }
-                    }
-                    dr.Close();
-                }
-                cn.Close();
-            }
-            System.Diagnostics.Debug.Print(data.ToString());
-            queryResult["data"] = data;
-            return queryResult;
 
+                    //2.開啟資料庫
+                    cn.Open();
+                    //3.引用SqlCommand物件
+                    SqlCommand command = new SqlCommand(queryStr, cn);
+
+                    using (SqlDataReader dr = command.ExecuteReader())
+                    {
+                        while (dr.Read())
+                        {
+                            data.Add(new JObject());
+                            for (int i = 0; i < dr.FieldCount; ++i)
+                            {
+                                data[data.Count - 1][dr.GetName(i)] = dr[i].ToString();
+                            }
+                        }
+                        dr.Close();
+                    }
+                    cn.Close();
+                }
+
+                queryResult["data"] = data;
+                return queryResult;
+            }
+            catch(Exception ex)
+            {
+                queryResult["status"] = false;
+                queryResult["msg"] = ex.Message;
+                return queryResult;
+            }
+            
         }
         
     }

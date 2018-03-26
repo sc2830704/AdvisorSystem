@@ -121,7 +121,6 @@
         })
     }
     function loadStudentTable() {
-        tableStudent.clear().draw();
         for (var i in _studentListJSONObjs) {
             //create row data object
             var newRow = [
@@ -155,7 +154,7 @@
             data: s_info,
             dataType: "json",
             success: function (data) {
-                
+                console.log("?");
                 $.pairTeacher = data['pairTeacher'];
                 tableStudentInfo.row.add([
                     data['sid'],
@@ -187,6 +186,7 @@
                 var olds = data['change']['old'];
                 var news = data['change']['new'];
                 var sc_allapproval = data['change']['sc_all_approval'];
+                console.log(data['change']);
                 for (var i in olds) {
                     var tname = olds[i]['tname'];
                     var status = olds[i]['status'];
@@ -211,9 +211,9 @@
                     html += "原始指導教授:"+tname + "  操作 "+ text+"<br>";
                 }
                 for (var i in news) {
-                    console.log(news);
                     var tname = news[i]['tname'];
                     var status = news[i]['status'];
+                    var tid = news[i]['tid'];
                     var text = '';
                     if (status == "1")
                         text = '等待其他老師確認';
@@ -461,7 +461,7 @@
             <tr>
                 <th>學號</th>
                 <th>學生姓名</th>
-                <th>指道教授</th>
+                <th>指導教授</th>
                 <th>操作</th>
             </tr>
         </thead>
