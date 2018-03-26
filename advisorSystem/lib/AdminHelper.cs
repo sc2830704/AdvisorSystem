@@ -118,7 +118,7 @@ namespace advisorSystem.lib
                             " JOIN [ntust].[pair] p on tg.tg_id=p.p_tg_id AND p.p_end_date IS NULL" +
                             " JOIN [ntust].[student] s on s.s_id=p.p_s_id" +
                             " LEFT JOIN (SELECT max(sse_event) now_status, sse_s_id FROM [ntust].[student_state_event] GROUP BY sse_s_id) sse on sse.sse_s_id=s.s_id", condi
-                                    , select: "sse.now_status, s.s_id");
+                                    , select: "(Case when sse.now_status IS NULL then '1' else sse.now_status End) as now_status , s.s_id");
                 if ((bool)returnValue["status"])
                 {
                     foreach (JObject jo in returnValue["data"])
@@ -126,6 +126,9 @@ namespace advisorSystem.lib
                         studentJO = new JObject();
                         s_id = (string)jo["s_id"];
                         studentJO["sid"] = s_id;
+
+                        studentJO["otherTeacher"] = getOtherTeacher(s_id, (string)jt["t_id"]);
+
                         studentJO["status"] = jo["now_status"];
                         if (s_id.Substring(0, 1) == "D")
                         {
@@ -215,10 +218,15 @@ namespace advisorSystem.lib
             condi["s.s_id"] = s_id;
 
             returnValue = sqlHelper.select("[ntust].[student] s" +
-                                        " LEFT JOIN [ntust].[pair] p on s.s_id=p.p_s_id AND p.p_end_date IS NULL" +
-                                        " LEFT JOIN [ntust].[teacher_group] tg on tg.tg_id=p.p_tg_id" +
-                                        " LEFT JOIN [ntust].[teacher] t on tg.t_id=t.t_id", condi
-                                    , "", "s.s_id sid, s.s_name sname, s.s_group, s.s_department, t.t_name tname");
+                                        " LEFT JOIN [ntust].[pair] p on s.s_id=p.p_s_id AND p.p_end_date IS NULL", condi
+                                    , ""
+                                    , "s.s_id sid, s.s_name sname, s.s_group, s.s_department"+
+                                        ", (Case when p.p_id IS NULL then 'apply' else 'change' End) as doEvent"+
+                                            ", STUFF((SELECT  ', ' + t.t_name " +
+                                            "FROM ntust.teacher_group as tg " +
+                                            "join ntust.teacher as t on t.t_id = tg.t_id " +
+                                            "WHERE p.p_tg_id = tg.tg_id " +
+                                            "FOR XML PATH('')),1,1,'') AS tname");
 
             if (!(bool)returnValue["status"])
             {
@@ -232,6 +240,32 @@ namespace advisorSystem.lib
             return returnJO;
 
         }
+
+        public JToken getOtherTeacher(string s_id, string t_id)
+        {
+            JArray returnJT = new JArray();
+            JObject condi = new JObject();
+            JObject returnValue = new JObject();
+
+            //string st_department = (string)st_info["st_department"];
+
+            //condi["s_department"] = st_department;
+            condi["s.s_id"] = s_id;
+
+            returnValue = sqlHelper.select("[ntust].[student] s" +
+                                        " JOIN [ntust].[pair] p on s.s_id=p.p_s_id AND p.p_end_date IS NULL" +
+                                        " JOIN [ntust].[teacher_group] tg on tg.tg_id=p.p_tg_id" +
+                                        " JOIN [ntust].[teacher] t on tg.t_id=t.t_id AND t.t_id != '"+ t_id + "'", condi
+                                    , "", "t.t_name tname, t.t_id tid, tg.t_order");
+
+            if (!(bool)returnValue["status"])
+            {
+                return returnJT;
+
+            }
+            return returnValue["data"];
+        }
+
         public JObject UpdateApply(String tg_id, String t_id, String adminId, int accept)
         {
             sqlHelper = new SQLHelper();

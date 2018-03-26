@@ -148,6 +148,23 @@ namespace advisorSystem.Controllers
         }
 
 
+        // POST: /admin/StudentApply
+        [HttpPost]
+        public string StudentApply()
+        {
+            getRoleInfo();
+
+            JObject condi = new JObject();
+            condi["s_u_id"] = userId;
+            JObject returnValue = studentSQL.studentApply(Request.Form["main"], JArray.Parse(Request.Form["sub"]), Request.Form["s_id"]);
+
+            //returnValue.Add("main", Request.Form["main"]);
+            //returnValue.Add("sub", Request.Form["sub"]);
+            //returnValue.Add("success", true);
+
+            return returnValue.ToString();
+        }
+
         // POST: /admin/StudentChange
         [HttpPost]
         public string StudentChange()
