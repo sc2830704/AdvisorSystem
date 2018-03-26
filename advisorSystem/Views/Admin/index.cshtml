@@ -156,13 +156,15 @@
             data: s_info,
             dataType: "json",
             success: function (data) {
-                
+                var btnHtml = data.doEvent === "apply" 
+                    ? '<button onClick="applyTeacher(\'' + data['sid']+'\',\'' + data['s_group']+'\',\'' + data['s_department']+'\')">申請指導教授</button>' 
+                    : '<button onClick="changeTeacher(\'' + data['sid']+'\',\'' + data['s_group']+'\',\'' + data['s_department']+'\')">更改指導教授</button>';
                 $.pairTeacher = data['pairTeacher'];
                 tableStudentInfo.row.add([
                     data['sid'],
                     data['sname'],
                     data['tname'],
-                    '<button onClick="changeTeacher(\'' + data['sid']+'\',\'' + data['s_group']+'\',\'' + data['s_department']+'\')">更改指導教授</button>'
+                    btnHtml
                 ]);
                 var sid = data['sid'];
                 var sc_allapproval = data['sc_allapproval'];
@@ -310,12 +312,23 @@
 
     }
     function getStudnetClickEvent(stu) {
-        var html = '';
+        var html = '',otherTeacher='';
         for (var i in stu) {
+            if(stu[i]['otherTeacher'].length>0){
+                otherTeacher='(';
+                for (var j in stu[i]['otherTeacher']) {
+                    otherTeacher += (stu[i]['otherTeacher'][j]["t_order"]=="1"?"主:":"副:")+stu[i]['otherTeacher'][j]["tname"]+", ";
+                }
+                otherTeacher = otherTeacher.substring(0,otherTeacher.length-2);
+                otherTeacher+=')';
+            }
+            else{
+                otherTeacher='';
+            }
             var id = stu[i]['sid'];
             var color = stu[i]['status'] == 0 ? "red;" : "blue;";
             var foregin = id.charAt(6) == 8 ? "text-decoration:underline;":"1";
-            html += '<a href="#" style="color:' + color + foregin+'" onClick="dialogStudnetInfo(\'' + id + '\')">' + id + '</a ></br>';
+            html += '<a href="#" style="color:' + color + foregin+'" onClick="dialogStudnetInfo(\'' + id + '\')">' + id + otherTeacher + '</a ></br>';
         }
         return html;
     }
@@ -334,16 +347,105 @@
         });
 
     }
+    function applyTeacher(sid,s_group,s_department) {
+        //to-do 申請指導教授
+        $.modify_s_id = sid;
+        var html = "";
+        $.each($.teacherList,function(k,v){
+            if (v["t_department"]== s_department) {
+                html += "<option value='"+v.t_id+"'>"+v.t_name+"</option>";
+            }
+        });
+        $("[id=mainTeacherListItem]").html(html);
+        
+        var html="",result;
+        
+        $( "#dialogForApply" ).dialog({
+            width: 400,
+            buttons: [
+		        {
+		            text: "變更",
+		            click: function() {
+
+		                if($("#dialogForApply [id=mainTeacherListItem]").val()===null){
+		                    alert("請選擇主要指導老師")
+		                    return false;
+		                }
+		                $( "#dialogForCheckApply" ).children("div").eq(0).children("span").eq(1).html($("#mainTeacherListItem").find(":selected").text());
+		                $( "#dialogForCheckApply" ).children("div:gt(0)").hide();
+		                var i=0;
+		                var subTeacher = [], infoObj;
+		                $.each($("#dialogForApply .subTeacher"),function(k,v){
+		                    if($(v).val()!==null){
+		                        infoObj={"t_id":$(v).val(), "t_type": $(v).attr("t_type")};
+		                        subTeacher[subTeacher.length] = infoObj;
+		                        $( "#dialogForCheckApply" ).children("div:gt(0)").eq(i).show();
+		                        $( "#dialogForCheckApply" ).children("div:gt(0)").eq(i).children("span").eq(1).html($(v).find(":selected").text());
+		                        i++;
+		                    }
+		                });
+
+		                $( "#dialogForCheckApply" ).dialog({
+		                    width: 400,
+		                    buttons: [
+		                        {
+		                            text: "Ok",
+		                            click: function() {
+		                                $.ajax({
+		                                    type:"POST",
+		                                    dataType: "text",
+		                                    url: "/admin/StudentApply",
+		                                    data: {
+		                                        main: $("#dialogForApply [id=mainTeacherListItem]").val() ,
+		                                        sub: JSON.stringify(subTeacher) ,
+		                                        s_id: $.modify_s_id
+		                                    },
+		                                    success: function(data){
+		                                        console.log(data);
+		                                        data = JSON.parse(data);
+		                                        if( data.status ) {
+		                                            alert( "申請成功，請等待教授確認" );
+		                                            location.reload();
+		                                        }
+		                                        else {
+		                                            alert( data.msg );
+		                                        }
+		                                    }
+		                                });
+		                                $( this ).dialog( "close" );
+		                            }
+		                        },
+		                        {
+		                            text: "Cancel",
+		                            click: function() {
+		                                $( this ).dialog( "close" );
+		                            }
+		                        }
+		                    ]
+		                });
+		                $( this ).dialog( "close" );
+		            }
+		        },
+		        {
+		            text: "取消",
+		            click: function() {
+		                $( this ).dialog( "close" );
+		            }
+		        }
+            ]
+        });
+    }
+
     function changeTeacher(sid,s_group,s_department) {
         //to-do 更改指導教授
         $.modify_s_id = sid;
         var html = "";
         $.each($.teacherList,function(k,v){
-            if (v["t_department"]== s_department&& v["t_group"] == s_group) {
+            if (v["t_department"]== s_department) {
                 html += "<option value='"+v.t_id+"'>"+v.t_name+"</option>";
             }
         });
-        $("#mainTeacherListItem").html(html);
+        $("#dialogForChange [id=mainTeacherListItem]").html(html);
         
         var html="",result,oriTeacherHtml="";
         $.each($.pairTeacher,function(k,v){
@@ -362,14 +464,14 @@
 		        {
 			        text: "變更",
 			        click: function() {
-                        if($("#mainTeacherListItem").val()===null){
+			            if($("#dialogForChange [id=mainTeacherListItem]").val()===null){
                             alert("請選擇主要指導老師")
                             return false;
                         }
-                        $( ".oriTeacherPlace" ).children("div").eq(0).children("span").eq(1).html($("#mainTeacherListItem").find(":selected").text());
+			            $( ".oriTeacherPlace" ).children("div").eq(0).children("span").eq(1).html($("#dialogForChange [id=mainTeacherListItem]").find(":selected").text());
                         $( ".oriTeacherPlace" ).children("div:gt(0)").hide();
                         var i=0;
-                        $.each($(".subTeacher"),function(k,v){
+                        $.each($("#dialogForChange .subTeacher"),function(k,v){
                             if($(v).val()!==null){
                                 $( ".oriTeacherPlace" ).children("div:gt(0)").eq(i).show();
                                 $( ".oriTeacherPlace" ).children("div:gt(0)").eq(i).children("span").eq(1).html($(v).find(":selected").text());
@@ -383,7 +485,7 @@
 			                        text: "Ok",
 			                        click: function() {
                                         var subTeacher = [], infoObj;
-                                        $.each($(".subTeacher"),function(k,v){
+                                        $.each($("#dialogForChange .subTeacher"),function(k,v){
                                             if($(v).val()!==null){
                                                 infoObj={"t_id":$(v).val(), "t_type": $(v).attr("t_type")};
                                                 subTeacher[subTeacher.length] = infoObj;
@@ -394,7 +496,7 @@
                                             dataType: "text",
                                             url: "/admin/StudentChange",
                                             data: {
-                                                main: $("#mainTeacherListItem").val() ,
+                                                main: $("#dialogForChange [id=mainTeacherListItem]").val() ,
                                                 sub: JSON.stringify(subTeacher) ,
                                                 s_id: $.modify_s_id
                                             },
@@ -463,8 +565,84 @@
     <div id="change">    </div>
 </div>
 
-
 <!-- ui-dialog -->
+<div id="dialogForApply" title="申請指導老師" hidden>
+    <div>
+        <span>主要指導教授</span>
+        <span></span>
+        <span>
+            <select id="mainTeacherListItem"></select>
+        </span>
+    </div>
+
+    <div>
+        <span>次要指導教授</span>
+        <span>@Html.DropDownList("departmentListItem")</span>
+        <span>
+            <select class="subTeacher" t_type="1">
+                <option disabled="disabled" selected="selected">選擇指導教授</option>
+            </select>
+        </span>
+        <span>
+            <select class="" t_type="2" style="display:none;">
+                <option disabled="disabled" selected="selected">選擇指導教授</option>
+            </select>
+        </span>
+        <span>
+            <button id="dialog-link" class="ui-button ui-corner-all ui-widget">
+                <span class="ui-icon ui-icon-newwin"></span> ?
+            </button>
+        </span>
+    </div>
+    <div>
+        <span>次要指導教授</span>
+        <span>@Html.DropDownList("departmentListItem")</span>
+        <span>
+            <select class="subTeacher" t_type="1">
+                <option disabled="disabled" selected="selected">選擇指導教授</option>
+            </select>
+        </span>
+        <span>
+            <select class="" t_type="2" style="display:none;">
+                <option disabled="disabled" selected="selected">選擇指導教授</option>
+            </select>
+        </span>
+    </div>
+    <div>
+        <span>次要指導教授</span>
+        <span>@Html.DropDownList("departmentListItem")</span>
+        <span>
+            <select class="subTeacher" t_type="1">
+                <option disabled="disabled" selected="selected">選擇指導教授</option>
+            </select>
+        </span>
+        <span>
+            <select class="" t_type="2" style="display:none;">
+                <option disabled="disabled" selected="selected">選擇指導教授</option>
+            </select>
+        </span>
+    </div>
+</div>
+<div id="dialogForCheckApply" title="申請指導老師" hidden>
+    <div>
+        <span>主要指導教授: </span>
+        <span></span>
+    </div>
+    <div>
+        <span>次要指導教授: </span>
+        <span></span>
+    </div>
+    <div>
+        <span>次要指導教授: </span>
+        <span></span>
+    </div>
+    <div>
+        <span>次要指導教授: </span>
+        <span></span>
+    </div>
+</div>
+
+
 <div id="dialogForChange" title="指導教授變更申請" hidden>
 	    <div>注意事項</div>
         <div>1.變更指導教授申請，須獲得所有指導教授同意。</div>
