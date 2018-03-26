@@ -277,6 +277,28 @@ namespace advisorSystem.lib
             return updateStatus;
 
         }
+        public JObject UpdateChange(String sc_id, String org_tg_id, String s_id, String t_id, String adminId, String thesis_state, String allapprove, int accept)
+        {
+            sqlHelper = new SQLHelper();
+            String query;
+            if (allapprove.Equals("0")) //更新原本老師的表(scota)
+            {
+                query = " UPDATE scota set scota_state = " + accept + ",scota_thesis_state=" + thesis_state +
+                            ", scota_check_by_type=1, scota_check_by_st_id='" + adminId + "' " +
+                           " FROM ntust.student_change_origin_teacher_approval scota" +
+                           " WHERE scota.scota_tg_id ='" + org_tg_id + "' AND scota.scota_t_id = '" + t_id + "'";
+                //檢查是否原本老師全部同意:如果是就更新allapproval=1
+            }
+            else //更新 申請新老師的表(sc)
+            {
+                query = " UPDATE sc set sc.sc_state = " + accept + ", sc.sc_check_by_type = 1, sc_check_by_st_id = '" + adminId + "'" +
+                           " FROM ntust.student_change sc" +
+                           " WHERE sc.sc_id ='" + sc_id + "' AND sc.sc_t_id = '" + t_id + "'";
+            }
+            JObject updateChange = sqlHelper.update(query);
+            return updateChange;
+
+        }
         public int CheckAllApply(String tg_id)
         {
             sqlHelper = new SQLHelper();
@@ -316,7 +338,65 @@ namespace advisorSystem.lib
             JObject applyStatus = sqlHelper.select(query);
             return applyStatus;
         }
+        public int CheckOrgChange(String org_tg_id)
+        {
+            sqlHelper = new SQLHelper();
+            //query for apply which not agree 
+            String query = "SELECT COUNT(*) AS count " +
+                        "FROM ntust.student_change_origin_teacher_approval scota " +
+                        "WHERE scota.scota_tg_id = " + org_tg_id + " AND scota.scota_state!=1";
+            JObject updateStatus = sqlHelper.select(query);
+            return Convert.ToInt32(updateStatus["data"][0]["count"]);
+        }
+        public JObject UpdateStudentChangeApproval(String tg_id)
+        {
 
+            sqlHelper = new SQLHelper();
+            String query = "UPDATE sc set sc.sc_all_approval = 1 " +
+                            "FROM ntust.student_change sc " +
+                            "WHERE sc.sc_tg_id = " + tg_id;
+            JObject updateSCA = sqlHelper.update(query);
+            return updateSCA;
+        }
+        public int CheckNewChange(String tg_id)
+        {
+            sqlHelper = new SQLHelper();
+            //query for apply which not agree 
+            String query = "SELECT COUNT(*) AS count " +
+                        "FROM ntust.student_change sc " +
+                        "WHERE sc.sc_tg_id = " + tg_id + " AND sc.sc_state!=1";
+            JObject updateStatus = sqlHelper.select(query);
+            return Convert.ToInt32(updateStatus["data"][0]["count"]);
+        }
+        public void UpdateOrgPair(string org_tg_id)
+        {
+            sqlHelper = new SQLHelper();
+            String queryStr = "UPDATE p set p_end_date='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "'  FROM ntust.pair p WHERE p.p_tg_id = " + org_tg_id;
+            sqlHelper.update(queryStr);
+            //JObject data = new JObject();
+            //data.Add("p_s_id", s_id);
+            //String table = "ntust.pair";
+            //sqlHelper.delete(table, data);
+
+        }
+        public JObject AddChangePair(String sc_id, String s_id)
+        {
+            sqlHelper = new SQLHelper();
+            String query = "INSERT into ntust.pair (p_tg_id, p_s_id ,p_pair_date) " +
+                           "SELECT sc.sc_tg_id, '" + s_id + "','" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "' " +
+                           "from ntust.student_change sc " +
+                           "WHERE sc.sc_id = " + sc_id;
+
+            JObject res = sqlHelper.insert(query);
+
+            return res;
+        }
+        public void UpdateStudentChangeHistory(String tg_id, int state)
+        {
+            sqlHelper = new SQLHelper();
+            String query = "UPDATE hsc set hsc_end_datetime='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "' ,hsc_state=" + state + "  FROM ntust.history_student_change hsc WHERE hsc_origin_tg_id = " + tg_id;
+            sqlHelper.update(query);
+        }
     }
 }
  
