@@ -122,6 +122,7 @@
     }
     function loadStudentTable() {
         for (var i in _studentListJSONObjs) {
+            console.log(_studentListJSONObjs);
             //create row data object
             var newRow = [
                 _studentListJSONObjs[i]['tname'],
@@ -325,9 +326,13 @@
         })
     }
     function getStudnetClickEvent(stu) {
-        var html = '',otherTeacher='';
+        var html = '', otherTeacher = '';
+        if (stu == '') {
+            return '';
+        }
+        console.log(stu);
         for (var i in stu) {
-            if(stu[i]['otherTeacher'].length>0){
+            if (stu[i]['otherTeacher'] != undefined && stu[i]['otherTeacher'].length > 0) {
                 otherTeacher='(';
                 for (var j in stu[i]['otherTeacher']) {
                     otherTeacher += (stu[i]['otherTeacher'][j]["t_order"]=="1"?"主:":"副:")+stu[i]['otherTeacher'][j]["tname"]+", ";
