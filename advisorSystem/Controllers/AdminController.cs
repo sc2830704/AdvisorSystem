@@ -277,7 +277,15 @@ namespace advisorSystem.Controllers
             //update teacher accpet according to allapprove
             JObject update_change = adminHelper.UpdateChange(sc_id, org_tg_id,s_id, t_id, adminId, thesis_state, sc_allapproval, accept);
             
-
+            if (accept == 2)
+            {
+                adminHelper.RemoveStudentChange(new_tg_id);
+                adminHelper.RemoveOriginalStudentChange(org_tg_id);
+                //update student change history
+                adminHelper.UpdateStudentChangeHistory(org_tg_id, state: 2); //state=1 means success
+                //update student apply status
+                adminHelper.UpdateStudentApplyStatus(s_id, state: 0); //state=0 means success
+            }
             /*check if all original teacher agree for change advisor*/
             // if they all agree then add new pair 
             if (sc_allapproval.Equals("0") && adminHelper.CheckOrgChange(org_tg_id) == 0)
