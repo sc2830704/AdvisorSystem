@@ -1172,6 +1172,7 @@ namespace advisorSystem.lib
         public JObject query(String queryStr, JObject dataArray)
         {
             JArray data = new JArray();
+            queryResult = new JObject();
             try
             {
                 using (cn)
@@ -1235,7 +1236,7 @@ namespace advisorSystem.lib
                     {
                         mySqlCmd.Parameters.AddWithValue("@" + x.Key, x.Value);
                     }
-                    System.Diagnostics.Debug.Print(mySqlCmd.ToString());
+                    System.Diagnostics.Debug.Print(mySqlCmd.CommandText);
                     try
                     {
                         int modified = (int)mySqlCmd.ExecuteNonQuery();

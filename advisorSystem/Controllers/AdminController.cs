@@ -277,36 +277,38 @@ namespace advisorSystem.Controllers
             //update teacher accpet according to allapprove
             JObject update_change = adminHelper.UpdateChange(sc_id, org_tg_id,s_id, t_id, adminId, thesis_state, sc_allapproval, accept);
             
-            if (accept == 2)
+            if (accept == 1)
             {
-                adminHelper.RemoveStudentChange(new_tg_id);
-                adminHelper.RemoveOriginalStudentChange(org_tg_id);
+                /*check if all original teacher agree for change advisor*/
+                // update allapproval to 1 if all org teacher approved
+                if (sc_allapproval.Equals("0") && adminHelper.IsAllOrgTeacherApprove(org_tg_id))
+                {
+                    adminHelper.UpdateStudentChangeApproval(new_tg_id);
+                }
+                if (adminHelper.IsAllTeacherApprove(new_tg_id, org_tg_id))
+                {
+                    //update original pair since it's expired
+                    adminHelper.UpdateOrgPair(org_tg_id);
+                    //add new paired
+                    adminHelper.AddChangePair(sc_id, s_id);
+                    //update student change history
+                    adminHelper.UpdateStudentChangeHistory(org_tg_id, state: 1); //state=1 means success
+                    //update student apply status
+                    adminHelper.UpdateStudentApplyStatus(s_id, state: 0); //state=0 means success
+                }
+
+
+            }
+            else if (accept == 2)
+            {
+                //adminHelper.RemoveStudentChange(new_tg_id);
+                //adminHelper.RemoveOriginalStudentChange(org_tg_id);
                 //update student change history
                 adminHelper.UpdateStudentChangeHistory(org_tg_id, state: 2); //state=1 means success
                 //update student apply status
                 adminHelper.UpdateStudentApplyStatus(s_id, state: 0); //state=0 means success
             }
-            /*check if all original teacher agree for change advisor*/
-            // if they all agree then add new pair 
-            if (sc_allapproval.Equals("0") && adminHelper.CheckOrgChange(org_tg_id) == 0)
-            {
-                // checkallapply get 0 means all student_apply is accepted
-                // then update student apply allapprove to 1
-                adminHelper.UpdateStudentChangeApproval(new_tg_id);
-
-            }
-            else if (sc_allapproval.Equals("1") && adminHelper.CheckNewChange(new_tg_id) == 0)
-            {
-                //update original pair since it's expired
-                adminHelper.UpdateOrgPair(org_tg_id);
-                //add new paired
-                adminHelper.AddChangePair(sc_id, s_id);
-                //update student change history
-                adminHelper.UpdateStudentChangeHistory(org_tg_id, state: 1); //state=1 means success
-                //update student apply status
-                adminHelper.UpdateStudentApplyStatus(s_id, state: 0); //state=0 means success
-            }
-            //todo - remove student_change - another query to check is all change checked
+            
 
             return update_change["status"].ToString(Formatting.None);
         }
