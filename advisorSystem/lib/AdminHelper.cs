@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Web;
 
@@ -211,14 +212,14 @@ namespace advisorSystem.lib
             JObject returnJO = new JObject();
             JObject condi = new JObject();
             JObject returnValue = new JObject();
-
             //string st_department = (string)st_info["st_department"];
 
             //condi["s_department"] = st_department;
             condi["s.s_id"] = s_id;
 
             returnValue = sqlHelper.select("[ntust].[student] s" +
-                                        " LEFT JOIN [ntust].[pair] p on s.s_id=p.p_s_id AND p.p_end_date IS NULL", condi
+                                        " LEFT JOIN [ntust].[pair] p on s.s_id=p.p_s_id AND p.p_end_date IS NULL"
+                                    , condi
                                     , ""
                                     , "s.s_id sid, s.s_name sname, s.s_group, s.s_department"+
                                         ", (Case when p.p_id IS NULL then 'apply' else 'change' End) as doEvent"+
@@ -246,16 +247,31 @@ namespace advisorSystem.lib
             JArray returnJT = new JArray();
             JObject condi = new JObject();
             JObject returnValue = new JObject();
+            //JObject dataArray = new JObject
+            //{
+            //    ["t.t_id"]=t_id,
+            //    ["s.s_id"] = s_id
 
-            //string st_department = (string)st_info["st_department"];
+            //};
+            //String queryString = @"SELECT t.t_name tname, t.t_id tid, tg.t_order FROM [ntust].[student] s JOIN [ntust].[pair] p on s.s_id=p.p_s_id AND p.p_end_date IS NULL " +
+            //    "JOIN [ntust].[teacher_group] tg on tg.tg_id=p.p_tg_id " +
+            //    "JOIN [ntust].[teacher] t on tg.t_id=t.t_id AND t.t_id != @t.t_id WHERE s.s_id=@s.s_id";
+            //sqlHelper.query(queryString, dataArray);
+            //if (!(bool)returnValue["status"])
+            //{
+            //    return returnJT;
 
-            //condi["s_department"] = st_department;
+            //}
+            //return returnValue["data"];
+            string st_department = (string)st_info["st_department"];
+
+            condi["s_department"] = st_department;
             condi["s.s_id"] = s_id;
 
             returnValue = sqlHelper.select("[ntust].[student] s" +
-                                        " JOIN [ntust].[pair] p on s.s_id=p.p_s_id AND p.p_end_date IS NULL" +
-                                        " JOIN [ntust].[teacher_group] tg on tg.tg_id=p.p_tg_id" +
-                                        " JOIN [ntust].[teacher] t on tg.t_id=t.t_id AND t.t_id != '"+ t_id + "'", condi
+                                        " join [ntust].[pair] p on s.s_id=p.p_s_id and p.p_end_date is null" +
+                                        " join [ntust].[teacher_group] tg on tg.tg_id=p.p_tg_id" +
+                                        " join [ntust].[teacher] t on tg.t_id=t.t_id and t.t_id != '" + t_id + "'", condi
                                     , "", "t.t_name tname, t.t_id tid, tg.t_order");
 
             if (!(bool)returnValue["status"])
@@ -265,8 +281,19 @@ namespace advisorSystem.lib
             }
             return returnValue["data"];
         }
-
         public JObject UpdateApply(String tg_id, String t_id, String adminId, int accept)
+        {
+            sqlHelper = new SQLHelper();
+            String queryString = @"UPDATE sa set sa_state=@state, sa_check_by_type=1, sa_check_by_st_id=@sa_check_by_st_id FROM ntust.student_apply sa WHERE sa_tg_id = @sa_tg_id AND sa_t_id = @sa_t_id";
+            JObject dataArray = new JObject();
+            dataArray["state"] = accept;
+            dataArray["sa_check_by_st_id"] = adminId;
+            dataArray["sa_tg_id"] = tg_id;
+            dataArray["sa_t_id"] = t_id;
+            JObject updateStatus = sqlHelper.query(queryString, dataArray);
+            return updateStatus;
+        }
+        public JObject UpdateApply_old(String tg_id, String t_id, String adminId, int accept)
         {
             sqlHelper = new SQLHelper();
             JObject obj = new JObject();
@@ -275,28 +302,81 @@ namespace advisorSystem.lib
                             " WHERE sa_tg_id = '" + tg_id + "' AND sa_t_id = '" + t_id + "'";
             JObject updateStatus = sqlHelper.update(query);
             return updateStatus;
+        }
+
+        public bool IsAllTeacherApprove(String sc_tg_id, String scota_tg_id)
+        {
+            JObject dataArray = new JObject
+            {
+                ["sc_tg_id"] = sc_tg_id,
+                ["scota_tg_id"] = scota_tg_id
+            };
+            sqlHelper = new SQLHelper();
+            String queryString = @"SELECT SUM(t.count) as 'count' FROM (SELECT COUNT(*) AS count 
+FROM ntust.student_change_origin_teacher_approval scota 
+WHERE scota.scota_tg_id = @scota_tg_id AND scota.scota_state!=1 UNION SELECT COUNT(*) AS count 
+FROM ntust.student_change sc WHERE sc.sc_tg_id = @sc_tg_id AND sc.sc_state!=1 ) as t";
+            JArray res = (JArray)sqlHelper.query(queryString, dataArray).GetValue("data");
+            return Convert.ToInt32(res[0]["count"])==0?true:false;
 
         }
+
         public JObject UpdateChange(String sc_id, String org_tg_id, String s_id, String t_id, String adminId, String thesis_state, String allapprove, int accept)
         {
             sqlHelper = new SQLHelper();
-            String query;
-            if (allapprove.Equals("0")) //更新原本老師的表(scota)
+            JObject dataArray;
+            String queryString;
+            if (sc_id != "null") //new teacher
             {
-                query = " UPDATE scota set scota_state = " + accept + ",scota_thesis_state=" + thesis_state +
-                            ", scota_check_by_type=1, scota_check_by_st_id='" + adminId + "' " +
-                           " FROM ntust.student_change_origin_teacher_approval scota" +
-                           " WHERE scota.scota_tg_id ='" + org_tg_id + "' AND scota.scota_t_id = '" + t_id + "'";
-                //檢查是否原本老師全部同意:如果是就更新allapproval=1
-            }
-            else //更新 申請新老師的表(sc)
-            {
-                query = " UPDATE sc set sc.sc_state = " + accept + ", sc.sc_check_by_type = 1, sc_check_by_st_id = '" + adminId + "'" +
+                dataArray = new JObject
+                {
+                    ["sc_state"] = accept,
+                    ["scota_check_by_st_id"] = adminId,
+                    ["sc_id"] = sc_id,
+                    ["sc_t_id"] = t_id
+                };
+                queryString = " UPDATE sc set sc.sc_state = @sc_state , sc.sc_check_by_type = 1, sc_check_by_st_id = @scota_check_by_st_id" +
                            " FROM ntust.student_change sc" +
-                           " WHERE sc.sc_id ='" + sc_id + "' AND sc.sc_t_id = '" + t_id + "'";
+                           " WHERE sc.sc_id =@sc_id AND sc.sc_t_id = @sc_t_id";
+                return sqlHelper.query(queryString, dataArray);
+                
+
             }
-            JObject updateChange = sqlHelper.update(query);
-            return updateChange;
+            else //original teacher
+            {
+                dataArray = new JObject
+                {
+                    ["scota_state"] = accept,
+                    ["scota_thesis_state"] = thesis_state,
+                    ["scota_check_by_st_id"] = adminId,
+                    ["scota_tg_id"] = org_tg_id,
+                    ["scota_t_id"] = t_id
+                };
+                queryString = " UPDATE scota set scota_state = @scota_state,scota_thesis_state=@scota_thesis_state" +
+                            ", scota_check_by_type=1, scota_check_by_st_id=@scota_check_by_st_id" +
+                           " FROM ntust.student_change_origin_teacher_approval scota" +
+                           " WHERE scota.scota_tg_id = @scota_tg_id AND scota.scota_t_id = @scota_t_id";
+                return sqlHelper.query(queryString, dataArray);
+            }
+            
+            
+            //String query;
+            //if (allapprove.Equals("0")) //更新原本老師的表(scota)
+            //{
+            //    query = " UPDATE scota set scota_state = " + accept + ",scota_thesis_state=" + thesis_state +
+            //                ", scota_check_by_type=1, scota_check_by_st_id='" + adminId + "' " +
+            //               " FROM ntust.student_change_origin_teacher_approval scota" +
+            //               " WHERE scota.scota_tg_id ='" + org_tg_id + "' AND scota.scota_t_id = '" + t_id + "'";
+            //    //檢查是否原本老師全部同意:如果是就更新allapproval=1
+            //}
+            //else //更新 申請新老師的表(sc)
+            //{
+            //    query = " UPDATE sc set sc.sc_state = " + accept + ", sc.sc_check_by_type = 1, sc_check_by_st_id = '" + adminId + "'" +
+            //               " FROM ntust.student_change sc" +
+            //               " WHERE sc.sc_id ='" + sc_id + "' AND sc.sc_t_id = '" + t_id + "'";
+            //}
+            //JObject updateChange = sqlHelper.update(query);
+            //return updateChange;
 
         }
         public int CheckAllApply(String tg_id)
@@ -305,10 +385,19 @@ namespace advisorSystem.lib
             //找出所有未同意的老師申請的數量
             JObject obj = new JObject();
             //query for apply which not agree 
-            String query = " SELECT COUNT(*) AS count FROM " +
+            JObject dataArray = new JObject
+            {
+                ["sa_tg_id"]= tg_id
+            };
+            String queryString = " SELECT COUNT(*) AS count FROM " +
                             "ntust.student_apply sa " +
-                            "WHERE sa.sa_tg_id = " + tg_id + " AND sa.sa_state != 1 ";
-            JObject updateStatus = sqlHelper.select(query);
+                            "WHERE sa.sa_tg_id =@sa_tg_id AND sa.sa_state != 1 ";
+            JObject updateStatus = sqlHelper.query(queryString, dataArray);
+
+            //String query = " SELECT COUNT(*) AS count FROM " +
+            //                "ntust.student_apply sa " +
+            //                "WHERE sa.sa_tg_id = " + tg_id + " AND sa.sa_state != 1 ";
+            //JObject updateStatus = sqlHelper.select(query);
             JArray array = (JArray)updateStatus.GetValue("data");
             System.Diagnostics.Debug.Print(array.ToString());
             return Convert.ToInt32(updateStatus["data"][0]["count"]);
@@ -348,6 +437,20 @@ namespace advisorSystem.lib
             JObject updateStatus = sqlHelper.select(query);
             return Convert.ToInt32(updateStatus["data"][0]["count"]);
         }
+        public bool IsAllOrgTeacherApprove(String scota_tg_id)
+        {
+            sqlHelper = new SQLHelper();
+            //query for apply which not agree 
+            JObject dataArray = new JObject
+            {
+                ["scota_tg_id"] = scota_tg_id
+            };
+            String query = @"SELECT COUNT(*) AS count " +
+                        "FROM ntust.student_change_origin_teacher_approval scota " +
+                        "WHERE scota.scota_tg_id = @scota_tg_id AND scota.scota_state!=1";
+            int notApprrovalCount = Convert.ToInt32(sqlHelper.query(query, dataArray)["data"][0]["count"]);
+            return notApprrovalCount == 0 ? true : false;
+        }
         public JObject UpdateStudentChangeApproval(String tg_id)
         {
 
@@ -371,8 +474,12 @@ namespace advisorSystem.lib
         public void UpdateOrgPair(string org_tg_id)
         {
             sqlHelper = new SQLHelper();
-            String queryStr = "UPDATE p set p_end_date='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "'  FROM ntust.pair p WHERE p.p_tg_id = " + org_tg_id;
-            sqlHelper.update(queryStr);
+            JObject dataArray = new JObject
+            {
+                ["org_tg_id"] = org_tg_id
+            };
+            String queryStr = @"UPDATE p set p_end_date='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "'  FROM ntust.pair p WHERE p.p_tg_id = @org_tg_id";
+            sqlHelper.NonQuery(queryStr, dataArray);
             //JObject data = new JObject();
             //data.Add("p_s_id", s_id);
             //String table = "ntust.pair";
@@ -382,14 +489,18 @@ namespace advisorSystem.lib
         public JObject AddChangePair(String sc_id, String s_id)
         {
             sqlHelper = new SQLHelper();
-            String query = "INSERT into ntust.pair (p_tg_id, p_s_id ,p_pair_date) " +
-                           "SELECT sc.sc_tg_id, '" + s_id + "','" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "' " +
-                           "from ntust.student_change sc " +
-                           "WHERE sc.sc_id = " + sc_id;
-
-            JObject res = sqlHelper.insert(query);
-
-            return res;
+            JObject dataArray = new JObject
+            {
+                ["sc_id"] = sc_id,
+                ["s_id"] = s_id
+            };
+            String now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            String queryStr = @"INSERT into ntust.pair (p_tg_id, p_s_id ,p_pair_date) " +
+                "SELECT sc.sc_tg_id, @s_id,'"+now+"' " +
+                "from ntust.student_change sc " +
+                "WHERE sc.sc_id = @sc_id ";
+            return sqlHelper.NonQuery(queryStr, dataArray);
+            
         }
         public void UpdateStudentChangeHistory(String tg_id, int state)
         {

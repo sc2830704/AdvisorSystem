@@ -121,6 +121,7 @@
         })
     }
     function loadStudentTable() {
+        tableStudent.clear().draw();
         for (var i in _studentListJSONObjs) {
             console.log(_studentListJSONObjs);
             //create row data object
@@ -178,10 +179,12 @@
                     var text = '';
                     if (status == "1")
                         text = '等待其他老師確認';
+                    else if (status == "2")
+                        text = '不同意';
                     else
-                        text = '<button onClick=\'acceptApply("' + tg_id + '","' + sid + '","' + tid
-                            + '",1)\'>同意</button> <button onClick=\'acceptApply("' + tg_id + '","' + sid
-                            + '",0)\'>不同意</button>'
+                        text = '<button onClick=\'acceptApply("' + tg_id + '","' + sid + '","' + tid + '","' + tname
+                            + '",1)\'>同意</button> <button onClick=\'acceptApply("' + tg_id + '","' + sid + '","' + tid + '","' + tname
+                            + '",2)\'>不同意</button>'
                     html += tname +"   "+ text+"</br>";
                 }
                 $("#apply").html(html);
@@ -198,6 +201,8 @@
                     var text = '';
                     if (status == 1)
                         text = '等待其他老師確認';
+                    else if (status == "2")
+                        text = '不同意';
                     else
                         text = '<button onClick=\'acceptChange('
                             + '"' + 'null'
@@ -208,10 +213,11 @@
                             + '","' + sc_allapproval + '",1)\'>同意</button>' +
                             ' <button onClick=\'acceptChange('
                             + '"' + 'null'
-                            + '","' + olds[i]['tg_id']
+                            + '","' + olds[i]['org_tg_id']
+                            + '","' + olds[i]['new_tg_id']
                             + '","' + sid
                             + '","' + tid
-                            + '","' + sc_allapproval + '",0)\'>不同意</button>'
+                            + '","' + sc_allapproval + '",2)\'>不同意</button>'
                     html += "原始指導教授:"+tname + "  操作 "+ text+"<br>";
                 }
                 for (var i in news) {
@@ -231,10 +237,11 @@
                             + '","' + sc_allapproval + '",1)\'>同意</button>' +
                             ' <button onClick=\'acceptChange('
                             + '"' + news[i]['sc_id']
+                            + '","' + news[i]['org_tg_id']
                             + '","' + news[i]['new_tg_id']
                             + '","' + sid
                             + '","' + tid
-                            + '","' + sc_allapproval + '",0)\'>不同意</button>'
+                            + '","' + sc_allapproval + '",2)\'>不同意</button>'
                     html += "新指導教授:" + tname + "  操作 " +  text + "</br>" ;
                 }
                 
@@ -247,14 +254,18 @@
 
 
     }
-    function acceptApply(tg_id, s_id, t_id , accept) {
+    function acceptApply(tg_id, s_id, t_id ,t_name, accept) {
         var data = {
             "tg_id": tg_id,
             "t_id": t_id,
             "s_id": s_id,
             "accept": accept
         }
-
+        if (accept)
+            $("#accept").text("同意");
+        else
+            $("#accept").text("不同意");
+        $("#teacher").text(t_name);
         $("#dialog-acceptApply").dialog({
             resizable: false,
             height: "auto",
@@ -262,7 +273,6 @@
             modal: true,
             buttons: {
                 "確定": function () {
-                    $("#teacher").text(t_id);
                     $(this).dialog("close");
                     $.ajax({
                         type: "POST",
@@ -295,7 +305,8 @@
             "sc_allapproval": sc_allapproval,
             "accept": accept
         }
-        $("#dialog-acceptChange").dialog({
+        if (accept == 1) {
+            $("#dialog-acceptChange").dialog({
             resizable: false,
             height: "auto",
             width: 400,
@@ -312,6 +323,10 @@
                 }
             }
         });
+        } else {
+            UpdateStudentChange(data, s_id);
+        }
+        
 
     }
     function UpdateStudentChange(data, sid) {
@@ -322,6 +337,7 @@
             dataType: "json",
             success: function (data) {
                 loadStudentInfo(sid);
+                getStudentList();
             }
         })
     }
@@ -752,6 +768,6 @@
 
 <div id="dialog-acceptApply" title="同意申請" hidden>
     <p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;">
-        </span>同意<a id="teacher"></a>為該學生之指導學生
+        </span><a id="accept">同意</a><a id="teacher"></a>為該學生之指導學生
     </p>
 </div>
