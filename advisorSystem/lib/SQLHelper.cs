@@ -142,49 +142,7 @@ namespace advisorSystem.lib
 
         }
 
-        public JObject select2(string table, JObject dataArr, string condi = "", string select = "*")
-        {
-            cn = new SqlConnection(connString);
-            JArray data = new JArray();
-            String whereCondi = "WHERE ";
-            foreach (var x in dataArr)
-            {
-                whereCondi += x.Key + "='" + x.Value + "' AND ";
-            }
-            whereCondi = whereCondi.Length == 6 ? "" : whereCondi.Substring(0, whereCondi.Length - 4);
-
-            string qs = "SELECT " + select + " FROM " + table + " " + condi + whereCondi + ";";
-
-            System.Diagnostics.Debug.Print(qs);
-
-            using (cn)
-            {
-                //2.開啟資料庫
-                cn.Open();
-                //3.引用SqlCommand物件
-                SqlCommand command = new SqlCommand(qs, cn);
-
-                using (SqlDataReader dr = command.ExecuteReader())
-                {
-                    while (dr.Read())
-                    {
-                        data.Add(new JObject());
-                        for (int i = 0; i < dr.FieldCount; ++i)
-                        {
-                            data[data.Count - 1][dr.GetName(i)] = dr[i].ToString();
-                        }
-                    }
-                    dr.Close();
-                }
-                cn.Close();
-            }
-            System.Diagnostics.Debug.Print(data.ToString());
-            queryResult["status"] = true;
-            queryResult["data"] = data;
-            return queryResult;
-
-        }
-
+        
         public JObject insertMulti(String table, JArray dataArr)
         {
             cn = new SqlConnection(connString);
@@ -221,8 +179,6 @@ namespace advisorSystem.lib
                 {
                     //sqlCmd.Parameters.AddWithValue("@" + y.Key, y.Value.ToString());
                     sqlCmd.Parameters.AddWithValue("@" + y.Key, Convert.ToString(y.Value));
-                    //sqlCmd.Parameters["@"+ y.Key].Value = Convert.ToString(y.Value);
-                    System.Diagnostics.Debug.Print(y.Key+" = "+ Convert.ToString(y.Value));
                 }
                 int modified = (int)sqlCmd.ExecuteNonQuery();
                 try
@@ -266,48 +222,7 @@ namespace advisorSystem.lib
             
             queryResult["status"] = true;
             return queryResult;
-
-            /*try
-            {
-                int modified = (int)sqlCmd.ExecuteNonQuery();
-
-                //int modified = (int)sqlCmd.ExecuteScalar();
-
-                if (cn.State == System.Data.ConnectionState.Open)
-                    cn.Close();
-
-                queryResult["status"] = true;
-                return queryResult;
-            }
-            catch (SqlException odbcEx)
-            {
-                // Handle more specific SqlException exception here.
-                System.Diagnostics.Debug.Print(odbcEx.ToString());
-
-                JArray errorMessages = new JArray();
-
-                queryResult["status"] = false;
-
-                for (int i = 0; i < odbcEx.Errors.Count; i++)
-                {
-                    errorMessages.Add(odbcEx.Errors[i].Message);
-                    //errorMessages[i] = odbcEx.Errors[i].Message;
-                }
-
-                queryResult["msg"] = errorMessages;
-                queryResult["code"] = odbcEx.Number;
-                return queryResult;
-            }
-            catch (Exception ex)
-            {
-                // Handle generic ones here.
-                System.Diagnostics.Debug.Print(ex.ToString());
-
-                queryResult["status"] = false;
-                queryResult["msg"] = ex.ToString();
-                return queryResult;
-            }*/
-
+            
         }
 
         public JObject insert(String table, JObject dataArr, String condi="")
@@ -620,8 +535,9 @@ namespace advisorSystem.lib
                         {
                             dr.Close();
                             cn.Close();
-                            queryResult["status"] = false;
+                            queryResult["status"] = true;
                             queryResult["msg"] = "empty";
+                            queryResult["data"] = data;
                             System.Diagnostics.Debug.Print(queryResult.ToString());
                             return queryResult;
                         }
@@ -651,71 +567,7 @@ namespace advisorSystem.lib
                 return queryResult;
             }
         }
-        public JObject NonQuery(String queryStr, JObject dataArray)
-        {
-            try
-            {
-                using (cn)
-                {
-                    //2.開啟資料庫
-                    cn.Open();
-                    //3.引用SqlCommand物件
-                    SqlCommand mySqlCmd = new SqlCommand(queryStr, cn);
-                    foreach (var x in dataArray)
-                    {
-                        mySqlCmd.Parameters.AddWithValue("@" + x.Key, x.Value);
-                    }
-                    System.Diagnostics.Debug.Print(mySqlCmd.CommandText);
-                    try
-                    {
-                        int modified = (int)mySqlCmd.ExecuteNonQuery();
-                        if (modified != 1)
-                        {
-                            queryResult["status"] = false;
-                            queryResult["msg"] = "insert fail";
-                            return queryResult;
-                        }
-                    }
-                    catch (SqlException odbcEx)
-                    {
-                        // Handle more specific SqlException exception here.
-                        System.Diagnostics.Debug.Print(odbcEx.ToString());
-
-                        JArray errorMessages = new JArray();
-
-                        queryResult["status"] = false;
-
-                        for (int i = 0; i < odbcEx.Errors.Count; i++)
-                        {
-                            errorMessages.Add(odbcEx.Errors[i].Message);
-                            //errorMessages[i] = odbcEx.Errors[i].Message;
-                        }
-
-                        queryResult["msg"] = errorMessages;
-                        queryResult["code"] = odbcEx.Number;
-                        return queryResult;
-                    }
-                    catch (Exception ex)
-                    {
-                        // Handle generic ones here.
-                        System.Diagnostics.Debug.Print(ex.ToString());
-
-                        queryResult["status"] = false;
-                        queryResult["msg"] = ex.ToString();
-                        return queryResult;
-                    }
-                }
-                queryResult["status"] = true;
-                queryResult["msg"] = "success";
-                return queryResult;
-            }
-            catch (Exception ex)
-            {
-                queryResult["status"] = false;
-                queryResult["msg"] = ex.Message;
-                return queryResult;
-            }
-        }
+        
     }
 }
  

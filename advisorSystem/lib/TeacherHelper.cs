@@ -42,102 +42,121 @@ namespace advisorSystem.lib
         public JObject GetStudent()
         {
             sqlHelper = new SQLHelper();
-            JObject teacher = new JObject();
-
-            teacher["t.t_id"] = t_id;
-
-            String select = "s.s_id, s.s_name, s.s_state,STUFF(( SELECT ','+sub_t.t_name FROM ntust.teacher as sub_t join ntust.teacher_group as sub_tg on sub_t.t_id=sub_tg.t_id WHERE sub_tg.tg_id=tg.tg_id FOR XML PATH('')),1 ,1 ,'' ) AS whole_teacher ";
-            
-            return sqlHelper.select2("ntust.teacher t " +
-                                                " left join ntust.teacher_group tg on t.t_id=tg.t_id " +
-                                                " join ntust.pair p on p.p_tg_id=tg.tg_id " +
-                                                " join ntust.student s on s.s_id = p.p_s_id  " +
-                                                " left join ntust.teacher t2 on t2.t_id=tg.t_id", teacher, select: select);
-            
-
+            JObject dataArray = new JObject
+            {
+                ["t_id"] = t_id
+            };
+            String queryString = @"SELECT s.s_id, s.s_name, s.s_state,STUFF(( " +
+                "SELECT ','+sub_t.t_name FROM ntust.teacher as sub_t join ntust.teacher_group as sub_tg on sub_t.t_id=sub_tg.t_id " +
+                "WHERE sub_tg.tg_id=tg.tg_id FOR XML PATH('')),1 ,1 ,'' ) AS whole_teacher  " +
+                "FROM ntust.teacher t  " +
+                "left join ntust.teacher_group tg on t.t_id=tg.t_id  " +
+                "join ntust.pair p on p.p_tg_id=tg.tg_id and p.p_end_date IS NULL " +
+                "join ntust.student s on s.s_id = p.p_s_id " +
+                "left join ntust.teacher t2 on t2.t_id=tg.t_id WHERE t.t_id=@t_id ;";
+            return sqlHelper.query(queryString, dataArray);
         }
         public JObject GetApply()
         {
             sqlHelper = new SQLHelper();
-            String select = " sa.sa_s_id, s.s_name, hsa.hsa_create_datetime, sa.sa_tg_id";
-
-
-            //return sqlHelper.select("ntust.student_apply as sa " +
-            //                                    " join [ntust].[teacher_group] as tg on tg.tg_id = sa.sa_tg_id" +
-            //                                    " join ntust.student as s on s.s_id = sa.sa_s_id" +
-            //                                    " join ntust.history_student_apply as hsa on hsa.hsa_s_id = sa.sa_s_id" 
-            //                                    , obj, select: select);
-            String queryStr = "SELECT sa.sa_s_id, sa.sa_tg_id, s.s_name,hsa.hsa_create_datetime, 0 AS allapprove " +
+            JObject dataArray = new JObject
+            {
+                ["t_id"] = t_id
+            };
+            String queryString = @"SELECT sa.sa_s_id, sa.sa_tg_id, s.s_name,hsa.hsa_create_datetime, 0 AS allapprove " +
                                 "from ntust.student_apply as sa " +
                                 "join [ntust].[teacher_group] as tg on tg.tg_id = sa.sa_tg_id " +
                                 "join ntust.student as s on s.s_id = sa.sa_s_id " +
                                 "join ntust.history_student_apply as hsa on hsa.hsa_s_id = sa.sa_s_id AND hsa.hsa_tg_id = sa.sa_tg_id " +
-                                "WHERE sa.sa_state = 0 AND sa.sa_t_id = '"+ t_id +"' " +
+                                "WHERE sa.sa_state = 0 AND sa.sa_t_id = @t_id " +
                                 "UNION " +
                                 "SELECT sa.sa_s_id, sa.sa_tg_id, s.s_name,hsa.hsa_create_datetime,1 AS allapprove " +
                                 "from ntust.student_apply as sa " +
                                 "join [ntust].[teacher_group] as tg on tg.tg_id = sa.sa_tg_id " +
-                                "join ntust.student_apply as sa_notapprove on sa_notapprove.sa_tg_id = tg.tg_id and sa_notapprove.sa_state = 0 and sa_notapprove.sa_t_id != '" + t_id + "' " +
+                                "join ntust.student_apply as sa_notapprove on sa_notapprove.sa_tg_id = tg.tg_id and sa_notapprove.sa_state = 0 and sa_notapprove.sa_t_id != @t_id " +
                                 "join ntust.student as s on s.s_id = sa.sa_s_id " +
                                 "join ntust.history_student_apply as hsa on hsa.hsa_s_id = sa.sa_s_id AND hsa.hsa_tg_id = sa.sa_tg_id " +
-                                "WHERE(sa.sa_state = 1 OR sa.sa_state = 2) AND sa.sa_t_id = '" + t_id + "'";
+                                "WHERE(sa.sa_state = 1 OR sa.sa_state = 2) AND sa.sa_t_id = @t_id";
 
-            return sqlHelper.select(queryStr);
+            return sqlHelper.query(queryString, dataArray);
 
         }
         public JObject GetChange()
         {
             sqlHelper = new SQLHelper();
-
-            return sqlHelper.select("SELECT DISTINCT  sc.sc_id, scota.scota_t_id,sc.sc_t_id, sc.sc_s_id, s.s_name, hsc.hsc_create_datetime, sc.sc_tg_id, hsc.hsc_origin_tg_id, t.t_name AS new_teacher, " +
+            JObject dataArray = new JObject
+            {
+                ["t_id"] = t_id
+            };
+            String queryString = "SELECT DISTINCT  sc.sc_id, scota.scota_t_id,sc.sc_t_id, sc.sc_s_id, s.s_name, hsc.hsc_create_datetime, sc.sc_tg_id, hsc.hsc_origin_tg_id, t.t_name AS new_teacher, " +
                                 "STUFF " +
                                 "((SELECT  ', ' + org_t.t_name " +
                                 "FROM ntust.teacher_group as org_tg " +
                                 "join ntust.teacher as org_t on org_t.t_id = org_tg.t_id " +
                                 "WHERE hsc.hsc_origin_tg_id = org_tg.tg_id " +
                                 "FOR XML PATH('')), 1, 1, '') AS org_teacher, sc.sc_all_approval, scota.scota_state, sc.sc_state, p.p_id " +
-                                "   FROM ntust.student_change as sc " +
+                                "FROM ntust.student_change as sc " +
                                 "join ntust.teacher_group as tg on sc.sc_tg_id = tg.tg_id " +
                                 "join ntust.teacher as t on t.t_id = sc.sc_t_id " +
                                 "join ntust.student as s on s.s_id = sc.sc_s_id " +
-                                "join ntust.history_student_change as hsc on hsc.hsc_s_id = s.s_id " +
+                                "join ntust.history_student_change as hsc on hsc.hsc_s_id = s.s_id AND hsc.hsc_end_datetime IS NULL AND hsc.hsc_tg_id = sc.sc_tg_id " +
                                 "join ntust.teacher_group as org_tg on org_tg.tg_id = hsc.hsc_origin_tg_id " +
-                                "left join ntust.student_change_origin_teacher_approval as scota on scota.scota_tg_id = org_tg.tg_id AND scota.scota_t_id = '" + t_id + "' " +
-                                //"left join ntust.student_change_origin_teacher_approval as scota on scota.scota_sc_id = sc.sc_id AND scota.scota_t_id = '" + t_id + "' " +
+                                "left join ntust.student_change_origin_teacher_approval as scota on scota.scota_tg_id = org_tg.tg_id AND scota.scota_t_id = @t_id " +
                                 "left join ntust.pair as p on p.p_tg_id = sc.sc_tg_id " +
-                                "WHERE((org_tg.t_id = '" + t_id + "' AND sc.sc_state = 0) OR(t.t_id = '" + t_id + "' AND sc.sc_all_approval = 1 AND sc.sc_state = 0)) AND p.p_tg_id is NULL");
-
-
+                                "WHERE((org_tg.t_id = @t_id AND sc.sc_state = 0 AND scota.scota_state = 0) OR(t.t_id = @t_id AND sc.sc_all_approval = 1 AND sc.sc_state = 0)) AND p.p_tg_id is NULL";
+            return sqlHelper.query(queryString, dataArray);
+            
         }
 
         public void UpdateStudentApplyHistory(String tg_id, int state)
         {
             sqlHelper = new SQLHelper();
-            String query = "UPDATE hsa set hsa_end_datetime='"+ DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "' ,hsa_state="+state+"  FROM ntust.history_student_apply hsa WHERE hsa_tg_id = " + tg_id;
+            String time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            JObject dataArray = new JObject
+            {
+                ["hsa_state"] = state,
+                ["hsa_tg_id"] = tg_id
+            };
+            String query = @"UPDATE hsa set hsa_end_datetime='"+ time + "' ,hsa_state=@hsa_state  FROM ntust.history_student_apply hsa WHERE hsa_tg_id =@hsa_tg_id ";
             sqlHelper.update(query);
         }
-        public void UpdateStudentChangeHistory(String tg_id, int state)
+        public void UpdateStudentChangeHistory(String tg_id, int state, String time)
         {
             sqlHelper = new SQLHelper();
-            String query = "UPDATE hsc set hsc_end_datetime='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "' ,hsc_state=" + state + "  FROM ntust.history_student_change hsc WHERE hsc_origin_tg_id = " + tg_id;
+            JObject dataArray = new JObject
+            {
+                ["hsa_state"] = state,
+                ["hsc_origin_tg_id"] = tg_id
+            };
+            String query = @"UPDATE hsc set hsc_end_datetime='" + time + "' ,hsc_state=@hsa_state  FROM ntust.history_student_change hsc WHERE hsc_origin_tg_id = @hsc_origin_tg_id";
             sqlHelper.update(query);
         }
-        public void UpdateOrgPair(string org_tg_id)
+        public void UpdateOrgPair(string org_tg_id,String time)
         {
             sqlHelper = new SQLHelper();
-            String queryStr = "UPDATE p set p_end_date='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "'  FROM ntust.pair p WHERE p.p_tg_id = "+ org_tg_id;
-            sqlHelper.update(queryStr);
+            JObject dataArray = new JObject
+            {
+                ["p_tg_id"] = org_tg_id
+            };
+            String queryStr = @"UPDATE p set p_end_date='" + time + "'  FROM ntust.pair p WHERE p.p_tg_id = @p_tg_id";
+            sqlHelper.query(queryStr, dataArray);
             
         }
 
         public JObject UpdateApply(String tg_id, int accept)
         {
             sqlHelper = new SQLHelper();
-            JObject obj = new JObject();
-            String query = " update sa set sa_state="+ accept + ", sa_check_by_type=1, sa_check_by_st_id='"+t_id+"'" + 
+            JObject dataArray = new JObject
+            {
+                ["sa_state"] = accept,
+                ["sa_check_by_st_id"] = t_id,
+                ["sa_t_id"] = t_id,
+                ["sa_tg_id"] = tg_id
+            };
+            String queryString = @"UPDATE sa set sa_state=@sa_state, sa_check_by_type=1, sa_check_by_st_id=@sa_check_by_st_id" + 
                             " FROM ntust.student_apply sa" +
-                            " WHERE sa_tg_id = '"+ tg_id + "' AND sa_t_id = '"+ t_id +"'";
-            JObject updateStatus = sqlHelper.update(query);
+                            " WHERE sa_tg_id = @sa_tg_id AND sa_t_id = @sa_t_id";
+            JObject updateStatus = sqlHelper.query(queryString, dataArray);
             return updateStatus;
                         
         }
@@ -145,35 +164,74 @@ namespace advisorSystem.lib
         {
             sqlHelper = new SQLHelper();
             //找出所有未同意的老師申請的數量
-            JObject obj = new JObject();
+            JObject dataArray = new JObject
+            {
+                ["sa_tg_id"] = tg_id
+            };
             //query for apply which not agree 
-            String query = " SELECT COUNT(*) AS count FROM " +
+            String queryString = @" SELECT COUNT(*) AS count FROM " +
                             "ntust.student_apply sa "+
-                            "WHERE sa.sa_tg_id = "+ tg_id +" AND sa.sa_state != 1 ";
-            JObject updateStatus = sqlHelper.select(query);
+                            "WHERE sa.sa_tg_id = @sa_tg_id AND sa.sa_state != 1 ";
+            JObject updateStatus = sqlHelper.query(queryString, dataArray);
 
             JArray array = (JArray)updateStatus.GetValue("data");
-            System.Diagnostics.Debug.Print(array.ToString());
             return Convert.ToInt32(updateStatus["data"][0]["count"]);
+        }
+        public bool IsAllOrgTeacherApprove(String org_tg_id)
+        {
+            sqlHelper = new SQLHelper();
+            //query for apply which not agree 
+            JObject dataArray = new JObject
+            {
+                ["scota_tg_id"] = org_tg_id
+            };
+            String query = @"SELECT COUNT(*) AS count " +
+                        "FROM ntust.student_change_origin_teacher_approval scota " +
+                        "WHERE scota.scota_tg_id = @scota_tg_id AND scota.scota_state!=1";
+            int notApprrovalCount = Convert.ToInt32(sqlHelper.query(query, dataArray)["data"][0]["count"]);
+            return notApprrovalCount == 0 ? true : false;
+        }
+        public bool IsAllTeacherApprove(String sc_tg_id, String scota_tg_id)
+        {
+            JObject dataArray = new JObject
+            {
+                ["sc_tg_id"] = sc_tg_id,
+                ["scota_tg_id"] = scota_tg_id
+            };
+            sqlHelper = new SQLHelper();
+            String queryString = @"SELECT SUM(t.count) as 'count' FROM (SELECT COUNT(*) AS count " +
+                                "FROM ntust.student_change_origin_teacher_approval scota " +
+                                "WHERE scota.scota_tg_id = @scota_tg_id AND scota.scota_state!=1 UNION SELECT COUNT(*) AS count " +
+                                "FROM ntust.student_change sc WHERE sc.sc_tg_id = @sc_tg_id AND sc.sc_state!=1 ) as t";
+            JArray res = (JArray)sqlHelper.query(queryString, dataArray).GetValue("data");
+            return Convert.ToInt32(res[0]["count"]) == 0 ? true : false;
         }
         public int CheckOrgChange(String org_tg_id)
         {
             sqlHelper = new SQLHelper();
+            JObject dataArray = new JObject
+            {
+                ["scota_tg_id"] = org_tg_id
+            };
             //query for apply which not agree 
-            String query = "SELECT COUNT(*) AS count "+
+            String queryString = @"SELECT COUNT(*) AS count "+
                         "FROM ntust.student_change_origin_teacher_approval scota "+
-                        "WHERE scota.scota_tg_id = "+ org_tg_id + " AND scota.scota_state!=1";
-            JObject updateStatus = sqlHelper.select(query);
+                        "WHERE scota.scota_tg_id = @scota_tg_id AND scota.scota_state!=1";
+            JObject updateStatus = sqlHelper.query(queryString, dataArray);
             return Convert.ToInt32(updateStatus["data"][0]["count"]);
         }
         public int CheckNewChange(String tg_id)
         {
             sqlHelper = new SQLHelper();
+            JObject dataArray = new JObject
+            {
+                ["sc_tg_id"] = tg_id
+            };
             //query for apply which not agree 
-            String query = "SELECT COUNT(*) AS count " +
+            String queryString = @"SELECT COUNT(*) AS count " +
                         "FROM ntust.student_change sc " +
                         "WHERE sc.sc_tg_id = " + tg_id + " AND sc.sc_state!=1";
-            JObject updateStatus = sqlHelper.select(query);
+            JObject updateStatus = sqlHelper.query(queryString, dataArray);
             return Convert.ToInt32(updateStatus["data"][0]["count"]);
         }
 
@@ -189,22 +247,26 @@ namespace advisorSystem.lib
             JObject res = sqlHelper.insert(table, obj);
             return res;
         }
-        public JObject AddChangePair(String sc_id, String s_id)
+        public JObject AddChangePair(String new_tg_id, String s_id, String time)
         {
             sqlHelper = new SQLHelper();
-            String query = "INSERT into ntust.pair (p_tg_id, p_s_id ,p_pair_date) " +
-                           "SELECT sc.sc_tg_id, '" + s_id + "','" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "' " +
-                           "from ntust.student_change sc " +
-                           "WHERE sc.sc_id = " + sc_id;
-            
-            JObject res = sqlHelper.insert(query);
-
-            return res;
+            JObject dataArray = new JObject
+            {
+                ["new_tg_id"] = new_tg_id,
+                ["s_id"] = s_id
+            };
+            String queryString = @"INSERT into ntust.pair (p_tg_id, p_s_id ,p_pair_date) VALUES(@new_tg_id, @s_id,'" + time + "')";
+            return sqlHelper.query(queryString, dataArray);
         }
         public JObject UpdateChange(String sc_id, String org_tg_id, String s_id, String t_id, String thesis_state, String allapprove, int accept)
         {
             sqlHelper = new SQLHelper();
             String query;
+            JObject dataArray = new JObject
+            {
+                ["scota_state"] = accept,
+                ["scota_thesis_state"] = thesis_state
+            };
             if (allapprove.Equals("0")) //更新原本老師的表(scota)
             {
                 query = " UPDATE scota set scota_state = "+accept+",scota_thesis_state="+ thesis_state + ", scota_check_by_type=1 "+
@@ -225,15 +287,22 @@ namespace advisorSystem.lib
         {
 
             sqlHelper = new SQLHelper();
-            String query = "UPDATE sc set sc.sc_all_approval = 1 "+
-                            "FROM ntust.student_change sc "+
-                            "WHERE sc.sc_tg_id = " + tg_id;
-            JObject updateSCA = sqlHelper.update(query);
-            return updateSCA;
+            JObject dataArray = new JObject
+            {
+                ["sc_tg_id"] = tg_id
+            };
+            String queryString = @"UPDATE sc set sc.sc_all_approval = 1 " +
+                            "FROM ntust.student_change sc " +
+                            "WHERE sc.sc_tg_id = @sc_tg_id";
+            return sqlHelper.query(queryString, dataArray);
         }
         public JObject GetApplyHistory()
         {
             sqlHelper = new SQLHelper();
+            JObject dataArray = new JObject
+            {
+
+            };
             String query = "SELECT s.s_id,s.s_name,hsa.hsa_create_datetime, hsa.hsa_end_datetime, hsa.hsa_state, " +
                             "STUFF ((SELECT  ', ' + new_t.t_name " +
                             "FROM ntust.teacher_group as new_tg "+
@@ -250,6 +319,10 @@ namespace advisorSystem.lib
         public JObject GetChangeHistory()
         {
             sqlHelper = new SQLHelper();
+            JObject dataArray = new JObject
+            {
+
+            };
             String query = "SELECT DISTINCT p.p_s_id, s.s_name, hsc.hsc_create_datetime, hsc.hsc_end_datetime, hsc.hsc_state, t.t_name AS new_teacher," +
                             " STUFF((SELECT  ', ' + org_t.t_name FROM ntust.teacher_group as org_tg"+
                             " join ntust.teacher as org_t on org_t.t_id = org_tg.t_id"+

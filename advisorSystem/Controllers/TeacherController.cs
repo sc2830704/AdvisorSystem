@@ -97,30 +97,26 @@ namespace advisorSystem.Controllers
             getRoleInfo();
             JObject update_apply = teacherHelper.UpdateApply(tg_id, accept);
 
-            //check if all teacher agree for application, 
-            /* CheckAllApply get 0 means all student apply in accept */
-            if (teacherHelper.CheckAllApply(tg_id) == 0)
+            if (accept == 1)
             {
-                //add new pair
-                teacherHelper.AddApplyPair(tg_id, s_id);
-                //update student apply history
-                teacherHelper.UpdateStudentApplyHistory(tg_id, state:1); //state=1 means success
-                //update student apply status
-                teacherHelper.UpdateStudentApplyStatus(s_id, state: 0); //state=0 means success
+                if (teacherHelper.CheckAllApply(tg_id) == 0)
+                {
+                    //add new pair
+                    teacherHelper.AddApplyPair(tg_id, s_id);
+                    //update student apply history
+                    teacherHelper.UpdateStudentApplyHistory(tg_id, state: 1); //state=1 means success
+                                                                              //update student apply status
+                    teacherHelper.UpdateStudentApplyStatus(s_id, state: 0); 
+                }
             }
-            else
+            else if(accept == 2)
             {
-                //全部都完成了，而且有老師拒絕
-                //check if all teacher are check and there's rejection to apply
-                //todo - update history student apply (state and ...?)
-                //remove - 
+                teacherHelper.UpdateStudentApplyHistory(tg_id, 2); //state=2 means reject
+                //update student apply status
+                teacherHelper.UpdateStudentApplyStatus(s_id, 0); 
             }
 
             return update_apply["status"].ToString(Formatting.None);
-            //if ((bool)change["status"])
-            //    return change["status"].ToString(Formatting.None);
-            //else
-            //    return change["msg"].ToString();
         }
         public String UpdateStudentChange(String sc_id, String org_tg_id, String tg_id, String s_id, String t_id, String thesis_state, String sc_allapproval, int accept)
         {
@@ -128,29 +124,37 @@ namespace advisorSystem.Controllers
 
             //update teacher accpet according to allapprove
             JObject update_change = teacherHelper.UpdateChange(sc_id, org_tg_id, s_id, t_id, thesis_state, sc_allapproval, accept);
-
-            System.Diagnostics.Debug.Print((String)update_change["status"]);
-
-            /*check if all original teacher agree for change advisor*/
-             // if they all agree then add new pair 
-            if (sc_allapproval.Equals("0") && teacherHelper.CheckOrgChange(org_tg_id) == 0)
+            
+            // to do
+            if (accept == 1)
             {
-                // CheckAllApply get 0 means all student_apply is accepted
-                // then update student apply allapprove to 1
-                teacherHelper.UpdateStudentChangeApproval(tg_id);
+                if (sc_allapproval.Equals("0") && teacherHelper.IsAllOrgTeacherApprove(org_tg_id))
+                {
+                    // then update student apply allapprove to 1
+                    teacherHelper.UpdateStudentChangeApproval(tg_id);
 
-            }else if(sc_allapproval.Equals("1") && teacherHelper.CheckNewChange(tg_id) == 0)
-            {
-                //update original pair since it's expired
-                teacherHelper.UpdateOrgPair(org_tg_id);
-                //add new paired
-                teacherHelper.AddChangePair(sc_id, s_id);
-                //update student change history
-                teacherHelper.UpdateStudentChangeHistory(org_tg_id, state:1); //state=1 means success
-                //update student apply status
-                teacherHelper.UpdateStudentApplyStatus(s_id, state: 0); //state=0 means success
+                }
+                if (sc_allapproval.Equals("1") && teacherHelper.IsAllTeacherApprove(tg_id, org_tg_id))
+                {
+                    String time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                    //update original pair since it's expired
+                    teacherHelper.UpdateOrgPair(org_tg_id, time);
+                    //add new paired
+                    teacherHelper.AddChangePair(tg_id, s_id, time);
+                    //update student change history
+                    teacherHelper.UpdateStudentChangeHistory(org_tg_id, 1, time); //state=1 means success
+                                                                                  //update student apply status
+                    teacherHelper.UpdateStudentApplyStatus(s_id, state: 0); //state=0 means success
+                }
             }
-            //todo - remove student_change - another query to check is all change checked
+            else if (accept == 2)
+            {
+                String time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                //update student change history
+                teacherHelper.UpdateStudentChangeHistory(org_tg_id, 2, time); //state=2 means reject
+                //update student apply status
+                teacherHelper.UpdateStudentApplyStatus(s_id, state: 0);
+            }
             
             return update_change["status"].ToString(Formatting.None);
             

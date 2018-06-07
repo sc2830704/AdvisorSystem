@@ -239,6 +239,11 @@
     <Content Include="Connected Services\Application Insights\ConnectedService.json" />
     <None Include="Properties\PublishProfiles\AdvisorSystems - Web Deploy.pubxml" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
+    <Content Include="Scripts\DataTables\DataTables-1.10.16\images\sort_asc.png" />
+    <Content Include="Scripts\DataTables\DataTables-1.10.16\images\sort_asc_disabled.png" />
+    <Content Include="Scripts\DataTables\DataTables-1.10.16\images\sort_both.png" />
+    <Content Include="Scripts\DataTables\DataTables-1.10.16\images\sort_desc.png" />
+    <Content Include="Scripts\DataTables\DataTables-1.10.16\images\sort_desc_disabled.png" />
     <Content Include="Scripts\DataTables\datatables.css" />
     <Content Include="Scripts\DataTables\datatables.js" />
     <Content Include="Scripts\DataTables\datatables.min.css" />
