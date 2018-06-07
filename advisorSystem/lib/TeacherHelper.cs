@@ -67,7 +67,7 @@ namespace advisorSystem.lib
                                 "from ntust.student_apply as sa " +
                                 "join [ntust].[teacher_group] as tg on tg.tg_id = sa.sa_tg_id " +
                                 "join ntust.student as s on s.s_id = sa.sa_s_id " +
-                                "join ntust.history_student_apply as hsa on hsa.hsa_s_id = sa.sa_s_id AND hsa.hsa_tg_id = sa.sa_tg_id " +
+                                "join ntust.history_student_apply as hsa on hsa.hsa_s_id = sa.sa_s_id AND hsa.hsa_tg_id = sa.sa_tg_id AND hsa.hsa_end_datetime IS NULL " +
                                 "WHERE sa.sa_state = 0 AND sa.sa_t_id = @t_id " +
                                 "UNION " +
                                 "SELECT sa.sa_s_id, sa.sa_tg_id, s.s_name,hsa.hsa_create_datetime,1 AS allapprove " +
@@ -75,7 +75,7 @@ namespace advisorSystem.lib
                                 "join [ntust].[teacher_group] as tg on tg.tg_id = sa.sa_tg_id " +
                                 "join ntust.student_apply as sa_notapprove on sa_notapprove.sa_tg_id = tg.tg_id and sa_notapprove.sa_state = 0 and sa_notapprove.sa_t_id != @t_id " +
                                 "join ntust.student as s on s.s_id = sa.sa_s_id " +
-                                "join ntust.history_student_apply as hsa on hsa.hsa_s_id = sa.sa_s_id AND hsa.hsa_tg_id = sa.sa_tg_id " +
+                                "join ntust.history_student_apply as hsa on hsa.hsa_s_id = sa.sa_s_id AND hsa.hsa_tg_id = sa.sa_tg_id AND hsa.hsa_end_datetime IS NULL " +
                                 "WHERE(sa.sa_state = 1 OR sa.sa_state = 2) AND sa.sa_t_id = @t_id";
 
             return sqlHelper.query(queryString, dataArray);
@@ -118,7 +118,7 @@ namespace advisorSystem.lib
                 ["hsa_tg_id"] = tg_id
             };
             String query = @"UPDATE hsa set hsa_end_datetime='"+ time + "' ,hsa_state=@hsa_state  FROM ntust.history_student_apply hsa WHERE hsa_tg_id =@hsa_tg_id ";
-            sqlHelper.update(query);
+            sqlHelper.query(query, dataArray);
         }
         public void UpdateStudentChangeHistory(String tg_id, int state, String time)
         {
@@ -301,9 +301,9 @@ namespace advisorSystem.lib
             sqlHelper = new SQLHelper();
             JObject dataArray = new JObject
             {
-
+                ["t_id"] = t_id
             };
-            String query = "SELECT s.s_id,s.s_name,hsa.hsa_create_datetime, hsa.hsa_end_datetime, hsa.hsa_state, " +
+            String queryString = "SELECT s.s_id,s.s_name,hsa.hsa_create_datetime, hsa.hsa_end_datetime, hsa.hsa_state, " +
                             "STUFF ((SELECT  ', ' + new_t.t_name " +
                             "FROM ntust.teacher_group as new_tg "+
                             "join ntust.teacher as new_t on new_t.t_id = new_tg.t_id "+
@@ -312,8 +312,8 @@ namespace advisorSystem.lib
                             "from ntust.history_student_apply hsa "+
                             "JOIN ntust.teacher_group as tg on tg.tg_id = hsa.hsa_tg_id "+
                             "JOIN ntust.student as s on s.s_id = hsa.hsa_s_id "+
-                            "WHERE tg.t_id = '"+t_id+"' AND hsa.hsa_end_datetime IS NOT NULL";
-            JObject applyHistory = sqlHelper.select(query);
+                            "WHERE tg.t_id = @t_id AND hsa.hsa_end_datetime IS NOT NULL";
+            JObject applyHistory = sqlHelper.query(queryString,  dataArray);
             return applyHistory;
         }
         public JObject GetChangeHistory()
@@ -321,21 +321,32 @@ namespace advisorSystem.lib
             sqlHelper = new SQLHelper();
             JObject dataArray = new JObject
             {
-
+                ["t_id"] = t_id
             };
-            String query = "SELECT DISTINCT p.p_s_id, s.s_name, hsc.hsc_create_datetime, hsc.hsc_end_datetime, hsc.hsc_state, t.t_name AS new_teacher," +
-                            " STUFF((SELECT  ', ' + org_t.t_name FROM ntust.teacher_group as org_tg"+
-                            " join ntust.teacher as org_t on org_t.t_id = org_tg.t_id"+
-                            " WHERE hsc.hsc_origin_tg_id = org_tg.tg_id"+
-                            " FOR XML PATH('')),1,1,'') AS org_teacher"+
-                            " FROM ntust.history_student_change as hsc"+
-                            " JOIN ntust.teacher_group as tg on(tg.tg_id = hsc.hsc_tg_id)"+
-                            " JOIN ntust.pair as p on p.p_tg_id = tg.tg_id"+
-                            " JOIN ntust.student as s on p.p_s_id = s.s_id"+
-                            " JOIN ntust.teacher as t on t.t_id = tg.t_id"+
-                            " join ntust.teacher_group as org_tg on(org_tg.tg_id = hsc.hsc_origin_tg_id  AND hsc.hsc_end_datetime IS NOT NULL)"+
-                            "WHERE(tg.t_id = '"+t_id+"') OR(org_tg.t_id = '"+t_id+"')";
-            JObject changeHistory = sqlHelper.select(query);
+            String queryString = "SELECT DISTINCT " +
+                "hsc.hsc_s_id, s.s_name, hsc.hsc_create_datetime, hsc.hsc_end_datetime, hsc.hsc_state, " +
+                "STUFF((SELECT  ', ' + new_t.t_name FROM ntust.teacher_group as new_tg join ntust.teacher as new_t on new_t.t_id = new_tg.t_id " +
+                "WHERE hsc.hsc_tg_id = new_tg.tg_id FOR XML PATH('')),1,1,'') AS new_teacher, " +
+                "STUFF((SELECT  ', ' + org_t.t_name FROM ntust.teacher_group as org_tg join ntust.teacher as org_t on org_t.t_id = org_tg.t_id " +
+                "WHERE hsc.hsc_origin_tg_id = org_tg.tg_id FOR XML PATH('')),1,1,'') AS org_teacher " +
+                "FROM ntust.history_student_change as hsc " +
+                "JOIN ntust.teacher_group as tg on(tg.tg_id = hsc.hsc_tg_id) " +
+                "JOIN ntust.student as s on hsc.hsc_s_id = s.s_id " +
+                "join ntust.teacher_group as org_tg on(org_tg.tg_id = hsc.hsc_origin_tg_id  AND hsc.hsc_end_datetime IS NOT NULL) " +
+                "WHERE(tg.t_id = @t_id) OR(org_tg.t_id = @t_id)";
+            //String queryString = @"SELECT DISTINCT p.p_s_id, s.s_name, hsc.hsc_create_datetime, hsc.hsc_end_datetime, hsc.hsc_state, t.t_name AS new_teacher," +
+            //                " STUFF((SELECT  ', ' + org_t.t_name FROM ntust.teacher_group as org_tg"+
+            //                " join ntust.teacher as org_t on org_t.t_id = org_tg.t_id"+
+            //                " WHERE hsc.hsc_origin_tg_id = org_tg.tg_id"+
+            //                " FOR XML PATH('')),1,1,'') AS org_teacher"+
+            //                " FROM ntust.history_student_change as hsc"+
+            //                " JOIN ntust.teacher_group as tg on(tg.tg_id = hsc.hsc_tg_id)"+
+            //                " JOIN ntust.pair as p on p.p_tg_id = tg.tg_id"+
+            //                " JOIN ntust.student as s on p.p_s_id = s.s_id"+
+            //                " JOIN ntust.teacher as t on t.t_id = tg.t_id"+
+            //                " join ntust.teacher_group as org_tg on(org_tg.tg_id = hsc.hsc_origin_tg_id  AND hsc.hsc_end_datetime IS NOT NULL)"+
+            //                "WHERE(tg.t_id = @t_id) OR(org_tg.t_id = @t_id)";
+            JObject changeHistory = sqlHelper.query(queryString, dataArray);
             return changeHistory;
         }
         public JObject UpdateStudentApplyStatus(String s_id, int state)

@@ -4,8 +4,6 @@
 <h2>@ViewBag.Title.</h2>
 <h3>@ViewBag.Message</h3>
 @section Scripts {
-    @Scripts.Render("~/bundles/datatable")
-    @Scripts.Render("~/bundles/jquery-ui")
 }
 <script>
     var teacherList = @(Html.Raw(Json.Encode(ViewBag.teacherList)));
@@ -305,18 +303,19 @@
             "sc_allapproval": sc_allapproval,
             "accept": accept
         }
-        if (accept == 1) {
+        if (accept == 1 && sc_id == 'null') {
+            console.log(sc_id);
             $("#dialog-acceptChange").dialog({
             resizable: false,
             height: "auto",
             width: 400,
             modal: true,
             buttons: {
-                "同意論文共用主題": function () {
+                "同意": function () {
                     $(this).dialog("close");
                     UpdateStudentChange(data, s_id);
                 },
-                "不同意論文共用主題": function () {
+                "不同意": function () {
                     data.thesis_state = 2;
                     $(this).dialog("close");
                     UpdateStudentChange(data, s_id);
@@ -597,7 +596,7 @@
     <p><h4>異動申請</h4></p>
     <div id="change">    </div>
 </div>
-<div id="dialog-acceptChange" title="學生資訊" hidden></div>
+<div id="dialog-acceptChange" title="學生資訊" hidden>是否同意共用論文主題?</div>
 
 <!-- ui-dialog -->
 <div id="dialogForApply" title="申請指導老師" hidden>
