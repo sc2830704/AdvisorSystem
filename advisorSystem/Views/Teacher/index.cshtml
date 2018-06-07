@@ -135,7 +135,7 @@
                 _studentApplyHistoryJSONObjs[i]['Apply_teacher'],
                 _studentApplyHistoryJSONObjs[i]['hsa_create_datetime'],
                 _studentApplyHistoryJSONObjs[i]['hsa_end_datetime'],
-                _studentApplyHistoryJSONObjs[i]['hsa_state']==0?'失敗':'成功'
+                _studentApplyHistoryJSONObjs[i]['hsa_state']=='2'?'失敗':'成功'
             ]);
             tableApplyHistory.draw();
         }
@@ -150,7 +150,7 @@
                 _studentChangeHistoryJSONObjs[i]['new_teacher'],
                 _studentChangeHistoryJSONObjs[i]['hsc_create_datetime'],
                 _studentChangeHistoryJSONObjs[i]['hsc_end_datetime'],
-                _studentChangeHistoryJSONObjs[i]['hsc_state'] == 0 ? '失敗' : '成功'
+                _studentChangeHistoryJSONObjs[i]['hsc_state'] == "2" ? '失敗' : '成功'
             ]);
             tableChangeHistory.draw();
         }
