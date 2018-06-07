@@ -152,6 +152,7 @@ namespace advisorSystem.lib
             condi["p.p_s_id"] = par_s_id;
             condi["p.p_end_date"] = "null";
             returnValue = sqlHelper.select("[ntust].[pair] p"
+                                    + " JOIN [ntust].[history_student_change] hsc on hsc.hsc_state = 0 AND hsc.hsc_origin_tg_id = p.p_tg_id"//判別申請的老師們拒絕就不引入
                                     + " JOIN [ntust].[student_change_origin_teacher_approval] scota on scota.scota_tg_id=p.p_tg_id"
                                     + " JOIN [ntust].[teacher_group] tg on tg.tg_id=scota.scota_tg_id AND tg.t_id=scota.scota_t_id"
                                     + " LEFT JOIN [ntust].[teacher] t on tg.t_id=t.t_id AND tg.t_type=1"
