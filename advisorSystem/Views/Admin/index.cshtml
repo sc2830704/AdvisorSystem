@@ -2,8 +2,8 @@
     ViewBag.Title = "Admin";
 }
 <h2>@ViewBag.Title.</h2>
-<h3>@ViewBag.Message</h3>
 @section Scripts {
+    @Scripts.Render("~/bundles/datatable")
 }
 <script>
     var teacherList = @(Html.Raw(Json.Encode(ViewBag.teacherList)));
@@ -188,6 +188,7 @@
                 $("#apply").html(html);
                 //get student change
                 html = '';
+                var isAllOrgTeacherApprove = false;
                 var olds = data['change']['old'];
                 var news = data['change']['new'];
                 var sc_allapproval = data['change']['sc_all_approval'];
@@ -201,7 +202,7 @@
                         text = '等待其他老師確認';
                     else if (status == "2")
                         text = '不同意';
-                    else
+                    else {
                         text = '<button onClick=\'acceptChange('
                             + '"' + 'null'
                             + '","' + olds[i]['org_tg_id']
@@ -216,6 +217,8 @@
                             + '","' + sid
                             + '","' + tid
                             + '","' + sc_allapproval + '",2)\'>不同意</button>'
+                        isAllOrgTeacherApprove = true;
+                    }
                     html += "原始指導教授:"+tname + "  操作 "+ text+"<br>";
                 }
                 for (var i in news) {
@@ -225,7 +228,7 @@
                     var text = '';
                     if (status == "1")
                         text = '等待其他老師確認';
-                    else
+                    else if (!isAllOrgTeacherApprove)
                         text = '<button onClick=\'acceptChange('
                             + '"' + news[i]['sc_id']
                             + '","' + news[i]['org_tg_id']
@@ -240,6 +243,22 @@
                             + '","' + sid
                             + '","' + tid
                             + '","' + sc_allapproval + '",2)\'>不同意</button>'
+                    else {
+                        text = '<button disabled="false" title="請先完成原本指導教授" onClick=\'acceptChange('
+                            + '"' + news[i]['sc_id']
+                            + '","' + news[i]['org_tg_id']
+                            + '","' + news[i]['new_tg_id']
+                            + '","' + sid
+                            + '","' + tid
+                            + '","' + sc_allapproval + '",1)\'>同意</button>' +
+                            ' <button disabled="false" title="請先完成原本指導教授" onClick=\'acceptChange('
+                            + '"' + news[i]['sc_id']
+                            + '","' + news[i]['org_tg_id']
+                            + '","' + news[i]['new_tg_id']
+                            + '","' + sid
+                            + '","' + tid
+                            + '","' + sc_allapproval + '",2)\'>不同意</button>'
+                    }
                     html += "新指導教授:" + tname + "  操作 " +  text + "</br>" ;
                 }
                 
