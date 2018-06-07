@@ -12007,7 +12007,16 @@ $.widget( "ui.dialog", {
 		dragStart: null,
 		dragStop: null,
 		focus: null,
-		open: null,
+		open: function () {
+		    $(this).closest(".ui-dialog")
+            .find(".ui-dialog-titlebar-close")
+            .addClass("ui-button")
+            .addClass("ui-corner-all")
+            .addClass("ui-widget")
+            .addClass("ui-button-icon-only")
+            //.removeClass("ui-dialog-titlebar-close")
+            .html('<span class="ui-button-icon ui-icon ui-icon-closethick"></span><span class="ui-button-icon-space"></span>close');
+		},
 		resize: null,
 		resizeStart: null,
 		resizeStop: null

@@ -68,7 +68,7 @@ namespace advisorSystem.Controllers
             ViewBag.studentInfo = studentInfo;
 
             List<SelectListItem> items = new List<SelectListItem>();
-            items.Add(new SelectListItem { Text = "請選擇", Disabled = true, Selected = true });
+            items.Add(new SelectListItem { Text = "請選擇", Disabled = false, Selected = true });
             JToken departmentList = commonSQL.getDepartmentList();
             foreach (JToken jt in departmentList)
             {
@@ -81,7 +81,7 @@ namespace advisorSystem.Controllers
             ViewBag.departmentListItem = items;
 
             items = new List<SelectListItem>();
-            items.Add(new SelectListItem { Text = "選擇指導教授*", Disabled = true, Selected = true });
+            items.Add(new SelectListItem { Text = "選擇指導教授*", Disabled = false, Selected = true });
             JToken teacherList = commonSQL.getTeacherList();
             foreach (JToken jt in teacherList)
             {

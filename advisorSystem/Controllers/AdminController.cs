@@ -65,7 +65,7 @@ namespace advisorSystem.Controllers
         {
 
             List<SelectListItem> items = new List<SelectListItem>();
-            items.Add(new SelectListItem { Text = "請選擇", Disabled = true, Selected = true });
+            items.Add(new SelectListItem { Text = "請選擇", Disabled = false, Selected = true });
             JToken departmentList = commonSQL.getDepartmentList();
             foreach (JToken jt in departmentList)
             {

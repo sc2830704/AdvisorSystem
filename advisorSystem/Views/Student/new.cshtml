@@ -19,12 +19,12 @@
     <span>@Html.DropDownList("departmentListItem")</span>
     <span>
         <select class="subTeacher" t_type="1">
-            <option disabled="disabled" selected="selected">選擇指導教授</option>
+            <option selected="selected" value="">選擇指導教授</option>
         </select>
     </span>
     <span>
         <select class="" t_type="2" style="display:none;">
-            <option disabled="disabled" selected="selected">選擇指導教授</option>
+            <option selected="selected" value="">選擇指導教授</option>
         </select>
     </span>
     <span>
@@ -38,12 +38,12 @@
     <span>@Html.DropDownList("departmentListItem")</span>
     <span>
         <select class="subTeacher" t_type="1">
-            <option disabled="disabled" selected="selected">選擇指導教授</option>
+            <option selected="selected" value="">選擇指導教授</option>
         </select>
     </span>
     <span>
         <select class="" t_type="2" style="display:none;">
-            <option disabled="disabled" selected="selected">選擇指導教授</option>
+            <option selected="selected" value="">選擇指導教授</option>
         </select>
     </span>
 </div>
@@ -52,12 +52,12 @@
     <span>@Html.DropDownList("departmentListItem")</span>
     <span>
         <select class="subTeacher" t_type="1">
-            <option disabled="disabled" selected="selected">選擇指導教授</option>
+            <option selected="selected" value="">選擇指導教授</option>
         </select>
     </span>
     <span>
         <select class="" t_type="2" style="display:none;">
-            <option disabled="disabled" selected="selected">選擇指導教授</option>
+            <option selected="selected" value="">選擇指導教授</option>
         </select>
     </span>
 </div>
@@ -145,7 +145,7 @@
             var nextSelectTag = $(this).parent().next().find("select");
             var next2SelectTag = $(this).parent().next().next().find("select");
             if(val=="0"){
-                var html='<option disabled="disabled" selected="selected">選擇單位</option>';
+                var html='<option selected="selected">選擇單位</option>';
                 $.each($.outSideTeacherUnit,function(k,v){
                     html += '<option value="'+v.t_service_units+'">'+v.t_service_units+'</option>';
                 });
@@ -157,7 +157,7 @@
                 next2SelectTag.addClass("subTeacher").show();
             }    
             else{
-                var html='<option disabled="disabled" selected="selected">選擇指導教授</option>';
+                var html='<option selected="selected" value="">選擇指導教授</option>';
                 $.each($.teacherList,function(k,v){
                     if(v.t_department==val)
                         html += '<option value="'+v.t_id+'">'+v.t_name+'</option>';
@@ -170,7 +170,7 @@
         });
 
         function outSideTeacherUnitEvent(){
-            var html='<option disabled="disabled" selected="selected">選擇指導教授</option>';
+            var html='<option selected="selected" value="">選擇指導教授</option>';
             console.log(1)
             var val = $(this).val();
             console.log(2)
@@ -219,7 +219,7 @@
                 $( "#dialogForChangeApply" ).children("div:gt(0)").hide();
                 var i=0;
                 $.each($(".subTeacher"),function(k,v){
-                    if($(v).val()!==null){
+                    if($(v).val()!==null&&$(v).val()!==""){
                         $( "#dialogForChangeApply" ).children("div:gt(0)").eq(i).show();
                         $( "#dialogForChangeApply" ).children("div:gt(0)").eq(i).children("span").eq(1).html($(v).find(":selected").text());
                         i++;
@@ -239,7 +239,7 @@
                 $( "#dialogForApply" ).children("div:gt(0)").hide();
                 var i=0;
                 $.each($(".subTeacher"),function(k,v){
-                    if($(v).val()!==null){
+                    if($(v).val()!==null&&$(v).val()!==""){
                         $( "#dialogForApply" ).children("div:gt(0)").eq(i).show();
                         $( "#dialogForApply" ).children("div:gt(0)").eq(i).children("span").eq(1).html($(v).find(":selected").text());
                         i++;
@@ -260,7 +260,7 @@
 			        click: function() {
                         var subTeacher = [], infoObj;
                         $.each($(".subTeacher"),function(k,v){
-                            if($(v).val()!==null){
+                            if($(v).val()!==null&&$(v).val()!==""){
                                 infoObj={"t_id":$(v).val(), "t_type": $(v).attr("t_type")};
                                 subTeacher[subTeacher.length] = infoObj;
                             }

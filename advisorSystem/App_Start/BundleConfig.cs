@@ -8,8 +8,8 @@ namespace advisorSystem
         // 如需「搭配」的詳細資訊，請瀏覽 http://go.microsoft.com/fwlink/?LinkId=301862
         public static void RegisterBundles(BundleCollection bundles)
         {
-            bundles.Add(new ScriptBundle("~/bundles/jquery-ui").Include(
-                        "~/Scripts/jquery-ui-1.12.1/jquery-ui.min.js"));
+            //bundles.Add(new ScriptBundle("~/bundles/jquery-ui").Include(
+            //            "~/Scripts/jquery-ui-1.12.1/jquery-ui.min.js"));
             bundles.Add(new ScriptBundle("~/bundles/datatable").Include(
                         "~/Scripts/DataTables/datatables.min.js"));
             bundles.Add(new ScriptBundle("~/bundles/global").Include(
@@ -18,7 +18,6 @@ namespace advisorSystem
                         "~/Scripts/jquery-{version}.js",
                         "~/Scripts/jquery-3.3.1.min.js",
                         "~/Scripts/GloblaScript.js",
-                        "~/Scripts/jquery-ui-1.12.1/jquery-ui.js",
                         "~/Scripts/DataTables/datatables.min.js",
                         "~/Scripts/global.js"));
 
@@ -32,7 +31,8 @@ namespace advisorSystem
 
             bundles.Add(new ScriptBundle("~/bundles/bootstrap").Include(
                       "~/Scripts/bootstrap.js",
-                      "~/Scripts/respond.js"));
+                      "~/Scripts/respond.js",
+                      "~/Scripts/jquery-ui-1.12.1/jquery-ui.js"));
 
             bundles.Add(new StyleBundle("~/Content/css").Include(
                       "~/Content/bootstrap.css",
