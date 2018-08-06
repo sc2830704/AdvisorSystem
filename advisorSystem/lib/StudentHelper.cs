@@ -219,7 +219,26 @@ namespace advisorSystem.lib
             }
 
         }
-
+        public JArray getChangeHistoryByID(String s_id)
+        {
+            
+            sqlHelper = new SQLHelper();
+            String queryString = @"SELECT DISTINCT 
+                                hsc.hsc_s_id, s.s_name, hsc.hsc_create_datetime, hsc.hsc_end_datetime, hsc.hsc_state,
+                                STUFF((SELECT  ', ' + new_t.t_name FROM ntust.teacher_group as new_tg join ntust.teacher as new_t on new_t.t_id = new_tg.t_id 
+                                WHERE hsc.hsc_tg_id = new_tg.tg_id FOR XML PATH('')),1,1,'') AS new_teacher, 
+                                STUFF((SELECT  ', ' + org_t.t_name FROM ntust.teacher_group as org_tg join ntust.teacher as org_t on org_t.t_id = org_tg.t_id 
+                                WHERE hsc.hsc_origin_tg_id = org_tg.tg_id FOR XML PATH('')),1,1,'') AS org_teacher 
+                                FROM ntust.history_student_change as hsc 
+                                JOIN ntust.teacher_group as tg on(tg.tg_id = hsc.hsc_tg_id) 
+                                JOIN ntust.student as s on hsc.hsc_s_id = s.s_id 
+                                join ntust.teacher_group as org_tg on(org_tg.tg_id = hsc.hsc_origin_tg_id  AND hsc.hsc_end_datetime IS NOT NULL) 
+                                WHERE s.s_id=@s_id";
+            JObject dataArray = new JObject();
+            dataArray["s_id"] = s_id;
+            JObject result = sqlHelper.query(queryString, dataArray);
+            return (JArray)result["data"];
+        }
         public JToken getChangeHistory()
         {
             JArray returnJA = new JArray();

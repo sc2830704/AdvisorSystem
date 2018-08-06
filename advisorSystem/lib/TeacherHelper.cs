@@ -63,14 +63,26 @@ namespace advisorSystem.lib
             {
                 ["t_id"] = t_id
             };
-            String queryString = @"SELECT sa.sa_s_id, sa.sa_tg_id, s.s_name,hsa.hsa_create_datetime, 0 AS allapprove " +
+            String queryString = @"SELECT sa.sa_s_id, sa.sa_tg_id, s.s_name,hsa.hsa_create_datetime, 0 AS allapprove, " +
+                                "STUFF((SELECT  ', ' + t.t_name " +
+                                "FROM ntust.student_apply as sa_all " +
+                                "join ntust.teacher as t on t.t_id = sa_all.sa_t_id " +
+                                "WHERE sa_all.sa_tg_id = sa.sa_tg_id " +
+                                "FOR XML PATH('')),1,1,''" +
+                                ") AS all_teacher "+
                                 "from ntust.student_apply as sa " +
                                 "join [ntust].[teacher_group] as tg on tg.tg_id = sa.sa_tg_id " +
                                 "join ntust.student as s on s.s_id = sa.sa_s_id " +
                                 "join ntust.history_student_apply as hsa on hsa.hsa_s_id = sa.sa_s_id AND hsa.hsa_tg_id = sa.sa_tg_id AND hsa.hsa_end_datetime IS NULL " +
                                 "WHERE sa.sa_state = 0 AND sa.sa_t_id = @t_id " +
                                 "UNION " +
-                                "SELECT sa.sa_s_id, sa.sa_tg_id, s.s_name,hsa.hsa_create_datetime,1 AS allapprove " +
+                                "SELECT sa.sa_s_id, sa.sa_tg_id, s.s_name,hsa.hsa_create_datetime,1 AS allapprove, " +
+                                "STUFF((SELECT  ', ' + t.t_name " +
+                                "FROM ntust.student_apply as sa_all " +
+                                "join ntust.teacher as t on t.t_id = sa_all.sa_t_id " +
+                                "WHERE sa_all.sa_tg_id = sa.sa_tg_id " +
+                                "FOR XML PATH('')),1,1,''" +
+                                ") AS all_teacher " +
                                 "from ntust.student_apply as sa " +
                                 "join [ntust].[teacher_group] as tg on tg.tg_id = sa.sa_tg_id " +
                                 "join ntust.student_apply as sa_notapprove on sa_notapprove.sa_tg_id = tg.tg_id and sa_notapprove.sa_state = 0 and sa_notapprove.sa_t_id != @t_id " +
@@ -88,22 +100,58 @@ namespace advisorSystem.lib
             {
                 ["t_id"] = t_id
             };
-            String queryString = "SELECT DISTINCT  sc.sc_id, scota.scota_t_id,sc.sc_t_id, sc.sc_s_id, s.s_name, hsc.hsc_create_datetime, sc.sc_tg_id, hsc.hsc_origin_tg_id, t.t_name AS new_teacher, " +
-                                "STUFF " +
-                                "((SELECT  ', ' + org_t.t_name " +
-                                "FROM ntust.teacher_group as org_tg " +
-                                "join ntust.teacher as org_t on org_t.t_id = org_tg.t_id " +
-                                "WHERE hsc.hsc_origin_tg_id = org_tg.tg_id " +
-                                "FOR XML PATH('')), 1, 1, '') AS org_teacher, sc.sc_all_approval, scota.scota_state, sc.sc_state, p.p_id " +
-                                "FROM ntust.student_change as sc " +
-                                "join ntust.teacher_group as tg on sc.sc_tg_id = tg.tg_id " +
-                                "join ntust.teacher as t on t.t_id = sc.sc_t_id " +
-                                "join ntust.student as s on s.s_id = sc.sc_s_id " +
-                                "join ntust.history_student_change as hsc on hsc.hsc_s_id = s.s_id AND hsc.hsc_end_datetime IS NULL AND hsc.hsc_tg_id = sc.sc_tg_id " +
-                                "join ntust.teacher_group as org_tg on org_tg.tg_id = hsc.hsc_origin_tg_id " +
-                                "left join ntust.student_change_origin_teacher_approval as scota on scota.scota_tg_id = org_tg.tg_id AND scota.scota_t_id = @t_id " +
-                                "left join ntust.pair as p on p.p_tg_id = sc.sc_tg_id " +
-                                "WHERE((org_tg.t_id = @t_id AND sc.sc_state = 0 AND scota.scota_state = 0) OR(t.t_id = @t_id AND sc.sc_all_approval = 1 AND sc.sc_state = 0)) AND p.p_tg_id is NULL";
+            String queryString = "SELECT DISTINCT @t_id AS t_id,sc_t_id, STUFF((SELECT  ',' + org_t.t_id " +
+                "FROM ntust.teacher_group as org_tg join ntust.teacher as org_t " +
+                "on org_t.t_id = org_tg.t_id " +
+                "WHERE hsc.hsc_origin_tg_id = org_tg.tg_id FOR XML PATH('')), 1, 1, '') " +
+                "AS org_t_id " +
+                ", STUFF ((SELECT  ',' + new_t.t_id " +
+                "FROM ntust.teacher_group as new_tg join ntust.teacher as new_t " +
+                "on new_t.t_id = new_tg.t_id " +
+                "WHERE sc.sc_tg_id = new_tg.tg_id FOR XML PATH('')), 1, 1, '') AS new_t_id," +
+                "sc.sc_s_id, s.s_name, hsc.hsc_create_datetime" +
+                ", sc.sc_tg_id, hsc.hsc_origin_tg_id," +
+                "STUFF((SELECT  ',' + new_t.t_name FROM ntust.teacher_group as new_tg join ntust.teacher as new_t " +
+                "on new_t.t_id = new_tg.t_id WHERE sc.sc_tg_id = new_tg.tg_id FOR XML PATH('')), 1, 1, '') " +
+                "AS new_teacher," +
+                "STUFF ((SELECT  ',' + org_t.t_name FROM ntust.teacher_group as org_tg join ntust.teacher as org_t " +
+                "on org_t.t_id = org_tg.t_id " +
+                "WHERE hsc.hsc_origin_tg_id = org_tg.tg_id FOR XML PATH('')), 1, 1, '') AS org_teacher," +
+                "sc.sc_all_approval, scota.scota_state, sc.sc_state, p.p_id " +
+                "FROM ntust.student_change as sc " +
+                "join ntust.teacher_group as tg on sc.sc_tg_id = tg.tg_id " +
+                "join ntust.student as s on s.s_id = sc.sc_s_id " +
+                "join ntust.history_student_change " +
+                "as hsc on hsc.hsc_s_id = s.s_id AND hsc.hsc_end_datetime IS NULL AND hsc.hsc_tg_id = sc.sc_tg_id " +
+                "join ntust.teacher_group as org_tg on org_tg.tg_id = hsc.hsc_origin_tg_id " +
+                "left join ntust.student_change_origin_teacher_approval " +
+                "as scota on scota.scota_tg_id = org_tg.tg_id AND scota.scota_t_id = @t_id " +
+                "left join ntust.pair as p on p.p_tg_id = sc.sc_tg_id " +
+                "WHERE((org_tg.t_id = @t_id AND sc.sc_state = 0 AND hsc.hsc_end_datetime IS NULL) " +
+                "OR(sc.sc_t_id = @t_id AND sc.sc_all_approval = 1 AND hsc.hsc_end_datetime IS NULL)) AND p.p_tg_id is NULL";
+
+
+            //String queryString = "SELECT DISTINCT  sc.sc_id, scota.scota_t_id,sc.sc_t_id, sc.sc_s_id, s.s_name, hsc.hsc_create_datetime, sc.sc_tg_id, hsc.hsc_origin_tg_id, " +
+            //                    "sc.sc_tg_id, hsc.hsc_origin_tg_id, " +
+            //                    "STUFF ((SELECT  ', ' + new_t.t_name " +
+            //                    "FROM ntust.teacher_group as new_tg join ntust.teacher as new_t " +
+            //                    "on new_t.t_id = new_tg.t_id " +
+            //                    "WHERE sc.sc_tg_id = new_tg.tg_id FOR XML PATH('')), 1, 1, '') AS new_teacher, " + 
+            //                    "STUFF " +
+            //                    "((SELECT  ', ' + org_t.t_name " +
+            //                    "FROM ntust.teacher_group as org_tg " +
+            //                    "join ntust.teacher as org_t on org_t.t_id = org_tg.t_id " +
+            //                    "WHERE hsc.hsc_origin_tg_id = org_tg.tg_id " +
+            //                    "FOR XML PATH('')), 1, 1, '') AS org_teacher, sc.sc_all_approval, scota.scota_state, sc.sc_state, p.p_id " +
+            //                    "FROM ntust.student_change as sc " +
+            //                    "join ntust.teacher_group as tg on sc.sc_tg_id = tg.tg_id " +
+            //                    "join ntust.teacher as t on t.t_id = sc.sc_t_id " +
+            //                    "join ntust.student as s on s.s_id = sc.sc_s_id " +
+            //                    "join ntust.history_student_change as hsc on hsc.hsc_s_id = s.s_id AND hsc.hsc_end_datetime IS NULL AND hsc.hsc_tg_id = sc.sc_tg_id " +
+            //                    "join ntust.teacher_group as org_tg on org_tg.tg_id = hsc.hsc_origin_tg_id " +
+            //                    "left join ntust.student_change_origin_teacher_approval as scota on scota.scota_tg_id = org_tg.tg_id AND scota.scota_t_id = @t_id " +
+            //                    "left join ntust.pair as p on p.p_tg_id = sc.sc_tg_id " +
+            //                    "WHERE((org_tg.t_id = @t_id AND sc.sc_state = 0 AND hsc.hsc_end_datetime IS NULL) OR(t.t_id = @t_id AND sc.sc_all_approval = 1 AND hsc.hsc_end_datetime IS NULL)) AND p.p_tg_id is NULL";
             return sqlHelper.query(queryString, dataArray);
             
         }
@@ -258,29 +306,38 @@ namespace advisorSystem.lib
             String queryString = @"INSERT into ntust.pair (p_tg_id, p_s_id ,p_pair_date) VALUES(@new_tg_id, @s_id,'" + time + "')";
             return sqlHelper.query(queryString, dataArray);
         }
-        public JObject UpdateChange(String sc_id, String org_tg_id, String s_id, String t_id, String thesis_state, String allapprove, int accept)
+        public JObject UpdateChange( String org_tg_id, String tg_id, String s_id, String t_id, String thesis_state, String allapprove, int accept)
         {
             sqlHelper = new SQLHelper();
-            String query;
-            JObject dataArray = new JObject
-            {
-                ["scota_state"] = accept,
-                ["scota_thesis_state"] = thesis_state
-            };
+            String queryString;
+            JObject dataArray;
             if (allapprove.Equals("0")) //更新原本老師的表(scota)
             {
-                query = " UPDATE scota set scota_state = "+accept+",scota_thesis_state="+ thesis_state + ", scota_check_by_type=1 "+
+                dataArray = new JObject
+                {
+                    ["scota_state"] = accept,
+                    ["scota_thesis_state"] = thesis_state,
+                    ["org_tg_id"] = org_tg_id,
+                    ["scota_t_id"] = t_id
+                };
+                queryString = " UPDATE scota set scota_state = @scota_state,scota_thesis_state=@scota_thesis_state, scota_check_by_type=1 " +
                            " FROM ntust.student_change_origin_teacher_approval scota" +
-                           " WHERE scota.scota_tg_id ='" + org_tg_id + "' AND scota.scota_t_id = '" + t_id + "'";
+                           " WHERE scota.scota_tg_id =@org_tg_id AND scota.scota_t_id = '" + t_id + "'";
                 //檢查是否原本老師全部同意:如果是就更新allapproval=1
             }
             else //更新 申請新老師的表(sc)
             {
-                query = " UPDATE sc set sc.sc_state = " + accept + ", sc.sc_check_by_type = 1 "+
-                           " FROM ntust.student_change sc" +
-                           " WHERE sc.sc_id ='" + sc_id + "' AND sc.sc_t_id = '" + t_id + "'";
+                dataArray = new JObject
+                {
+                    ["sc_state"] = accept,
+                    ["sc_t_id"] = t_id,
+                    ["tg_id"] = tg_id
+                };
+                queryString = "UPDATE sc set sc.sc_state = @sc_state , sc.sc_check_by_type = 1 "+
+                              "FROM ntust.student_change sc "+
+                              "WHERE sc.sc_t_id=@sc_t_id AND sc.sc_tg_id=@tg_id";
             }
-            JObject updateChange = sqlHelper.update(query);
+            JObject updateChange = sqlHelper.query(queryString, dataArray);
             return updateChange;
         }
         public JObject UpdateStudentChangeApproval(String tg_id)
@@ -304,7 +361,7 @@ namespace advisorSystem.lib
                 ["t_id"] = t_id
             };
             String queryString = "SELECT s.s_id,s.s_name,hsa.hsa_create_datetime, hsa.hsa_end_datetime, hsa.hsa_state, " +
-                            "STUFF ((SELECT  ', ' + new_t.t_name " +
+                            "STUFF ((SELECT  ',' + new_t.t_name " +
                             "FROM ntust.teacher_group as new_tg "+
                             "join ntust.teacher as new_t on new_t.t_id = new_tg.t_id "+
                             "WHERE hsa.hsa_tg_id = new_tg.tg_id "+

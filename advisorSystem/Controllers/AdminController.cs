@@ -147,7 +147,6 @@ namespace advisorSystem.Controllers
             return returnValue.ToString();
         }
 
-
         // POST: /admin/StudentApply
         [HttpPost]
         public string StudentApply()

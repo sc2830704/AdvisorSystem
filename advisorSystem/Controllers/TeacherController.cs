@@ -85,7 +85,6 @@ namespace advisorSystem.Controllers
         {
             getRoleInfo();
             JObject change = teacherHelper.GetChange();
-
             if ((bool)change["status"])
                 return change["data"].ToString(Formatting.None);
             else
@@ -123,7 +122,7 @@ namespace advisorSystem.Controllers
             getRoleInfo();
 
             //update teacher accpet according to allapprove
-            JObject update_change = teacherHelper.UpdateChange(sc_id, org_tg_id, s_id, t_id, thesis_state, sc_allapproval, accept);
+            JObject update_change = teacherHelper.UpdateChange(org_tg_id, tg_id, s_id, t_id, thesis_state, sc_allapproval, accept);
             
             // to do
             if (accept == 1)
