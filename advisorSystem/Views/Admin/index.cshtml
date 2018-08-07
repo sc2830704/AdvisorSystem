@@ -2,6 +2,7 @@
     ViewBag.Title = "Admin";
 }
 <h2>@ViewBag.Title.</h2>
+
 <h3><span>管理員: @ViewBag.adminInfo.st_name 您好</span></h3>
 
 
@@ -9,9 +10,9 @@
         <span class="ui-icon ui-icon-newwin"></span> ?
     </button>
 
+
 @section Scripts {
     @Scripts.Render("~/bundles/datatable")
-    @Scripts.Render("~/bundles/jquery-ui")
 }
 <script>
     var teacherList = @(Html.Raw(Json.Encode(ViewBag.teacherList)));
@@ -27,16 +28,12 @@
 
     function outSideTeacherUnitEvent(){
         var html='<option selected="selected" value="">選擇指導教授</option>';
-        console.log(1)
         var val = $(this).val();
-        console.log(2)
         var nextSelectTag = $(this).parent().next().find("select");
-        console.log(3)
         $.each($.ousSideTeacherList,function(k,v){
             if(v.t_service_units==val)
                 html += '<option value="'+v.t_id+'">'+v.t_name+'</option>';
         });
-        console.log(4)
         nextSelectTag.html(html);
     }
 
@@ -49,7 +46,7 @@
         //initialize datatabke
         generatorTable();
         tableStudentInfo = $("#tableStudentInfo").DataTable({ searching: false, paging: false, "bInfo": false });
-
+        tableChangeHistory = $("#tableChangeHistory").DataTable({ searching: false, paging: false, "bInfo": false });
         $("[id=departmentListItem]").bind("change",function(){
             var val = $(this).val();
             var nextSelectTag = $(this).parent().next().find("select");
@@ -59,11 +56,8 @@
                 $.each($.outSideTeacherUnit,function(k,v){
                     html += '<option value="'+v.t_service_units+'">'+v.t_service_units+'</option>';
                 });
-                console.log(111)
                 nextSelectTag.bind("change",outSideTeacherUnitEvent);
-                console.log(222)
                 nextSelectTag.removeClass("subTeacher");
-                console.log(333)
                 next2SelectTag.addClass("subTeacher").show();
             }    
             else{
@@ -194,8 +188,8 @@
     }
     function loadStudentTable() {
         tableStudent.clear().draw();
+        console.log(_studentListJSONObjs);
         for (var i in _studentListJSONObjs) {
-            console.log(_studentListJSONObjs);
             //create row data object
             var newRow = [
                 _studentListJSONObjs[i]['tname'],
@@ -221,6 +215,7 @@
     }
     function loadStudentInfo(sid) {
         tableStudentInfo.clear().draw();
+        tableChangeHistory.clear().draw();
         var s_info = { "sid": sid };
         $.ajax({
             type: "POST",
@@ -262,10 +257,10 @@
                 $("#apply").html(html);
                 //get student change
                 html = '';
+                var isAllOrgTeacherApprove = false;
                 var olds = data['change']['old'];
                 var news = data['change']['new'];
                 var sc_allapproval = data['change']['sc_all_approval'];
-                console.log(data['change']);
                 for (var i in olds) {
                     var tname = olds[i]['tname'];
                     var status = olds[i]['status'];
@@ -275,7 +270,7 @@
                         text = '等待其他老師確認';
                     else if (status == "2")
                         text = '不同意';
-                    else
+                    else {
                         text = '<button onClick=\'acceptChange('
                             + '"' + 'null'
                             + '","' + olds[i]['org_tg_id']
@@ -290,6 +285,8 @@
                             + '","' + sid
                             + '","' + tid
                             + '","' + sc_allapproval + '",2)\'>不同意</button>'
+                        isAllOrgTeacherApprove = true;
+                    }
                     html += "原始指導教授:"+tname + "  操作 "+ text+"<br>";
                 }
                 for (var i in news) {
@@ -299,7 +296,7 @@
                     var text = '';
                     if (status == "1")
                         text = '等待其他老師確認';
-                    else
+                    else if (!isAllOrgTeacherApprove)
                         text = '<button onClick=\'acceptChange('
                             + '"' + news[i]['sc_id']
                             + '","' + news[i]['org_tg_id']
@@ -314,13 +311,43 @@
                             + '","' + sid
                             + '","' + tid
                             + '","' + sc_allapproval + '",2)\'>不同意</button>'
+                    else {
+                        text = '<button disabled="false" title="請先完成原本指導教授" onClick=\'acceptChange('
+                            + '"' + news[i]['sc_id']
+                            + '","' + news[i]['org_tg_id']
+                            + '","' + news[i]['new_tg_id']
+                            + '","' + sid
+                            + '","' + tid
+                            + '","' + sc_allapproval + '",1)\'>同意</button>' +
+                            ' <button disabled="false" title="請先完成原本指導教授" onClick=\'acceptChange('
+                            + '"' + news[i]['sc_id']
+                            + '","' + news[i]['org_tg_id']
+                            + '","' + news[i]['new_tg_id']
+                            + '","' + sid
+                            + '","' + tid
+                            + '","' + sc_allapproval + '",2)\'>不同意</button>'
+                    }
                     html += "新指導教授:" + tname + "  操作 " +  text + "</br>" ;
                 }
                 
                 $("#change").html(html);
-
+                for (var i in data['changeHistory']) {
+                    console.log(data['changeHistory'][i]['s_name']);
+                    tableChangeHistory.row.add([
+                        data['changeHistory'][i]['hsc_s_id'],
+                        data['changeHistory'][i]['s_name'],
+                        data['changeHistory'][i]['new_teacher'],
+                        data['changeHistory'][i]['org_teacher'],
+                        data['changeHistory'][i]['hsc_create_datetime'],
+                        data['changeHistory'][i]['hsc_end_datetime'],
+                        data['changeHistory'][i]['hsc_state'] == 1 ? '成功' :'失敗'
+                    ]);
+                }
+                html = data['changeHistory'][0];
+                $("#changeHistory").html(html);
                 
                 tableStudentInfo.draw();
+                tableChangeHistory.draw();
             }
         })
 
@@ -352,7 +379,6 @@
                         data: data,
                         dataType: "json",
                         success: function (data) {
-                            console.log("success");
                             loadStudentInfo(s_id);
                             getStudentList();
                         }
@@ -377,18 +403,18 @@
             "sc_allapproval": sc_allapproval,
             "accept": accept
         }
-        if (accept == 1) {
+        if (accept == 1 && sc_id == 'null') {
             $("#dialog-acceptChange").dialog({
                 resizable: false,
                 height: "auto",
                 width: 400,
                 modal: true,
                 buttons: {
-                    "同意論文共用主題": function () {
+                    "同意": function () {
                         $(this).dialog("close");
                         UpdateStudentChange(data, s_id);
                     },
-                    "不同意論文共用主題": function () {
+                    "不同意": function () {
                         data.thesis_state = 2;
                         $(this).dialog("close");
                         UpdateStudentChange(data, s_id);
@@ -418,7 +444,6 @@
         if (stu == '') {
             return '';
         }
-        console.log(stu);
         for (var i in stu) {
             if (stu[i]['otherTeacher'] != undefined && stu[i]['otherTeacher'].length > 0) {
                 otherTeacher='(';
@@ -507,7 +532,6 @@
 		                                        s_id: $.modify_s_id
 		                                    },
 		                                    success: function(data){
-		                                        console.log(data);
 		                                        data = JSON.parse(data);
 		                                        if( data.status ) {
 		                                            alert( "申請成功，請等待教授確認" );
@@ -652,6 +676,7 @@
 <p><h5>學號紅色為休學，底線為外籍生</h5></p>
 <div id="dialog-studentinfo" title="學生資訊" hidden>
 
+    <p><h4><b>指導教授</b></h4></p>
     <table id="tableStudentInfo">
         <thead>
             <tr>
@@ -663,13 +688,30 @@
         </thead>
         <tbody></tbody>
     </table>
-    <p><h4>申請指導教授</h4></p>
-    <div id="apply">    </div>
+    <p><h4><b>申請指導教授</b></h4></p>
+    <div id="apply"></div>
 
-    <p><h4>異動申請</h4></p>
-    <div id="change">    </div>
+    <p><h4><b>異動申請</b></h4></p>
+    <div id="change"></div>
+    
+    <p><h4><b>異動紀錄</b></h4></p>
+    <div id="changeHistory">    </div>
+    <table id="tableChangeHistory">
+        <thead>
+            <tr>
+                <th>學號</th>
+                <th>學生姓名</th>
+                <th>原始指導教授</th>
+                <th>新指導教授</th>
+                <th>申請時間</th>
+                <th>完成時間</th>
+                <th>狀態</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 </div>
-<div id="dialog-acceptChange" title="學生資訊" hidden></div>
+<div id="dialog-acceptChange" title="學生資訊" hidden>是否同意共用論文主題?</div>
 
 <!-- ui-dialog -->
 <div id="dialogForApply" title="申請指導老師" hidden>

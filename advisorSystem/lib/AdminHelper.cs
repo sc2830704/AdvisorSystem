@@ -249,6 +249,7 @@ namespace advisorSystem.lib
             returnJO["apply"] = studentSQL.getApplyResultForAdmin(s_id);
             returnJO["change"] = studentSQL.getChangeResultForAdmin(s_id);
             returnJO["pairTeacher"] = studentSQL.getPairTeacher(s_id);
+            returnJO["changeHistory"] = studentSQL.getChangeHistoryByID(s_id);
             return returnJO;
 
         }
@@ -304,6 +305,7 @@ namespace advisorSystem.lib
             JObject updateStatus = sqlHelper.query(queryString, dataArray);
             return updateStatus;
         }
+        
         public bool IsAllTeacherApprove(String sc_tg_id, String scota_tg_id)
         {
             JObject dataArray = new JObject

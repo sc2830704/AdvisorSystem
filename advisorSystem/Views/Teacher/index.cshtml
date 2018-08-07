@@ -1,12 +1,9 @@
 ﻿@{
     ViewBag.Title = ViewBag.tname;
 }
-
 <h2>@ViewBag.Title.</h2>
-<h3>@ViewBag.Message</h3>
 @section Scripts {
     @Scripts.Render("~/bundles/datatable")
-    @Scripts.Render("~/bundles/jquery-ui")
 }
 <script>
     var _studentsJSONObjs;
@@ -57,6 +54,7 @@
                 _studentApplyJSONObjs[i]['sa_s_id'],
                 _studentApplyJSONObjs[i]['s_name'],
                 getGrade(_studentApplyJSONObjs[i]['sa_s_id']),
+                _studentApplyJSONObjs[i]['all_teacher'],
                 _studentApplyJSONObjs[i]['hsa_create_datetime'],
                 _opHtml
             ]);
@@ -66,54 +64,71 @@
     function loadStudentChangeTable() {
         //clear table every time
         tableChange.clear().draw();
+        var flag;
         for (var i in _studentChangeJSONObjs) {
+            var t_id = _studentChangeJSONObjs[i]["t_id"];
             //原本老師還沒全部同意
             if (_studentChangeJSONObjs[i]["sc_all_approval"] == '0') {
+                console.log(flag);
+                if (flag == _studentChangeJSONObjs[i]["sc_tg_id"]) {
+                    continue;
+                }
+                flag = _studentChangeJSONObjs[i]["sc_tg_id"];
                 if (_studentChangeJSONObjs[i]["scota_state"] == '0') {
-                    //sc_id, s_id, t_id, scota_thesis_state, sc_allapproval, accept
+
+                    //s_id, t_id, scota_thesis_state, sc_allapproval, accept
                     var _opHtml = '<button type="button" onclick=\'acceptChange("'
-                        + _studentChangeJSONObjs[i]['sc_id']
-                        + '","' + _studentChangeJSONObjs[i]['hsc_origin_tg_id']
+                        + _studentChangeJSONObjs[i]['hsc_origin_tg_id']
                         + '","' + _studentChangeJSONObjs[i]['sc_tg_id']
                         + '","' + _studentChangeJSONObjs[i]['sc_s_id']
-                        + '","' + _studentChangeJSONObjs[i]['scota_t_id']
+                        + '","' + t_id
                         + '","' + _studentChangeJSONObjs[i]['sc_all_approval']
                         + '", 1)\'>同意</button>'
                         + ' <button type="button"onclick=\'acceptChange("'
-                        + _studentChangeJSONObjs[i]['sc_id']
-                        + '","' + _studentChangeJSONObjs[i]['hsc_origin_tg_id']
+                        + _studentChangeJSONObjs[i]['hsc_origin_tg_id']
                         + '","' + _studentChangeJSONObjs[i]['sc_tg_id']
                         + '","' + _studentChangeJSONObjs[i]['sc_s_id']
-                        + '","' + _studentChangeJSONObjs[i]['scota_t_id']
+                        + '","' + t_id
                         + '","' + _studentChangeJSONObjs[i]['sc_all_approval']
-                        + '",2)\'>拒絕</button>';
+                        + '",2)\'>拒絕</button>(原老師)';
+
                 }
                 else
-                    var _opHtml = "等待其他老師同意中";    
+                    var _opHtml = "等待其他老師同意中";
             }
             //原本老師已經都同意，讓新老師操作
             else {
-                console.log(_studentChangeJSONObjs[i]);
-                if (_studentChangeJSONObjs[i]["scota_state"] == "")
-                    var _opHtml = '<button type="button" onclick=\'acceptChange("'
-                        + _studentChangeJSONObjs[i]['sc_id']
-                        + '","' + _studentChangeJSONObjs[i]['hsc_origin_tg_id']
-                        + '","' + _studentChangeJSONObjs[i]['sc_tg_id']
-                        + '","' + _studentChangeJSONObjs[i]['sc_s_id']
-                        + '","' + _studentChangeJSONObjs[i]['sc_t_id']
-                        + '","' + _studentChangeJSONObjs[i]['sc_all_approval']
-                        + '",1)\'>同意</button>'
-                        + ' <button type="button"onclick=\'acceptChange("'
-                        + _studentChangeJSONObjs[i]['sc_id']
-                        + '","' + _studentChangeJSONObjs[i]['hsc_origin_tg_id']
-                        + '","' + _studentChangeJSONObjs[i]['sc_tg_id']
-                        + '","' + _studentChangeJSONObjs[i]['sc_s_id']
-                        + '","' + _studentChangeJSONObjs[i]['sc_t_id']
-                        + '","' + _studentChangeJSONObjs[i]['sc_all_approval']
-                        + '",2)\'>拒絕</button>';
-                else
+
+                if (_studentChangeJSONObjs[i]["new_t_id"].split(',').includes(t_id)) {
+                    console.log(_studentChangeJSONObjs[i]["sc_t_id"].trim());
+                    if (!(_studentChangeJSONObjs[i]["sc_t_id"].trim() == t_id)) {
+                        //不是自己的就就過濾掉
+                        continue;
+                    }
+                        
+                    if (_studentChangeJSONObjs[i]["sc_state"] == "0") {
+                        var _opHtml = '<button type="button" onclick=\'acceptChange("'
+                            + _studentChangeJSONObjs[i]['hsc_origin_tg_id']
+                            + '","' + _studentChangeJSONObjs[i]['sc_tg_id']
+                            + '","' + _studentChangeJSONObjs[i]['sc_s_id']
+                            + '","' + t_id
+                            + '","' + _studentChangeJSONObjs[i]['sc_all_approval']
+                            + '",1)\'>同意</button>'
+                            + ' <button type="button"onclick=\'acceptChange("'
+                             + _studentChangeJSONObjs[i]['hsc_origin_tg_id']
+                            + '","' + _studentChangeJSONObjs[i]['sc_tg_id']
+                            + '","' + _studentChangeJSONObjs[i]['sc_s_id']
+                            + '","' + t_id
+                            + '","' + _studentChangeJSONObjs[i]['sc_all_approval']
+                            + '",2)\'>拒絕</button>(新老師)';
+                    } else {
+                        _opHtml = '等待其他老師同意中';
+                    }   
+                } else {
                     _opHtml = '等待其他老師同意中';
-            }
+                }
+            }           
+            
             tableChange.row.add([
                 _studentChangeJSONObjs[i]['sc_s_id'],
                 _studentChangeJSONObjs[i]['s_name'],
@@ -124,6 +139,7 @@
                 _opHtml
             ]);
             tableChange.draw();
+            
         }
     }
     function loadApplyHistoryTable() {
@@ -135,7 +151,7 @@
                 _studentApplyHistoryJSONObjs[i]['Apply_teacher'],
                 _studentApplyHistoryJSONObjs[i]['hsa_create_datetime'],
                 _studentApplyHistoryJSONObjs[i]['hsa_end_datetime'],
-                _studentApplyHistoryJSONObjs[i]['hsa_state']==0?'失敗':'成功'
+                _studentApplyHistoryJSONObjs[i]['hsa_state']=='2'?'失敗':'成功'
             ]);
             tableApplyHistory.draw();
         }
@@ -144,13 +160,13 @@
         tableChangeHistory.clear().draw();
         for (var i in _studentChangeHistoryJSONObjs) {
             tableChangeHistory.row.add([
-                _studentChangeHistoryJSONObjs[i]['p_s_id'],
+                _studentChangeHistoryJSONObjs[i]['hsc_s_id'],
                 _studentChangeHistoryJSONObjs[i]['s_name'],
                 _studentChangeHistoryJSONObjs[i]['org_teacher'],
                 _studentChangeHistoryJSONObjs[i]['new_teacher'],
                 _studentChangeHistoryJSONObjs[i]['hsc_create_datetime'],
                 _studentChangeHistoryJSONObjs[i]['hsc_end_datetime'],
-                _studentChangeHistoryJSONObjs[i]['hsc_state'] == 0 ? '失敗' : '成功'
+                _studentChangeHistoryJSONObjs[i]['hsc_state'] == "2" ? '失敗' : '成功'
             ]);
             tableChangeHistory.draw();
         }
@@ -215,7 +231,6 @@
             "s_id": s_id,
             "accept" : accept
         }
-
         $("#dialog-acceptApply").dialog({
             resizable: false,
             height: "auto",
@@ -243,12 +258,18 @@
                 }
             }
         });
-        
+
+        if (accept == 1) {
+            $('#dialog-acceptApply').dialog('option', 'title', '同意申請');
+            $('#dialog-apply-cointent').text('同意該學生為指導學生');
+        } else {
+            $('#dialog-acceptApply').dialog('option', 'title', '拒絕申請');
+            $('#dialog-apply-cointent').text('不同意該學生為指導學生');
+        }
         
     }
-    function acceptChange(sc_id, org_tg_id, tg_id, s_id, t_id, sc_allapproval, accept) {
+    function acceptChange(org_tg_id, tg_id, s_id, t_id, sc_allapproval, accept) {
         var data = {
-            "sc_id": sc_id,
             "org_tg_id": org_tg_id,
             "tg_id": tg_id,
             "s_id": s_id,
@@ -257,7 +278,6 @@
             "sc_allapproval": sc_allapproval,
             "accept": accept
         }
-        console.log("data");
         console.log(data);
         $("#dialog-acceptChange").dialog({
             resizable: false,
@@ -315,12 +335,9 @@
             }
         })    
     }
-
-
-
 </script>
 <div id="dialog-acceptApply" title="同意申請" hidden>
-    <p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>同意該學生為指導學生</p>
+    <p><span id="dialog-apply-cointent" style="float:left; margin:12px 12px 20px 0;">同意該學生為指導學生</span></p>
 </div>
 <div id="dialog-acceptChange" title="確認共同指導" hidden>
     <p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>是否准予使用共同之研究內容及成果，當作 學位論文之主體</p>
@@ -347,6 +364,7 @@
             <th>學號</th>
             <th>名字</th>
             <th>年級</th>
+            <th>共同指導教授</th>
             <th>申請時間</th>
             <th>操作</th>
         </tr>
