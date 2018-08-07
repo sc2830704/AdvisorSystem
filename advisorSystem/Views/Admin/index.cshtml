@@ -2,7 +2,13 @@
     ViewBag.Title = "Admin";
 }
 <h2>@ViewBag.Title.</h2>
-<h3>@ViewBag.Message</h3>
+<h3><span>管理員: @ViewBag.adminInfo.st_name 您好</span></h3>
+
+
+    <button id="dialog-link" class="ui-button ui-corner-all ui-widget">
+        <span class="ui-icon ui-icon-newwin"></span> ?
+    </button>
+
 @section Scripts {
     @Scripts.Render("~/bundles/datatable")
     @Scripts.Render("~/bundles/jquery-ui")
@@ -71,6 +77,72 @@
                 next2SelectTag.removeClass("subTeacher").hide();
             }
             nextSelectTag.html(html);
+        });
+
+        $("[id=dialog-link]").bind("click",function(){
+            
+            $( "#dialogForAddTeacher" ).dialog({
+                width: 400,
+                buttons: [
+                    {
+                        text: "新增",//變更
+                        click: function() {
+                            if($("#dialogForAddTeacher #t_name").val()===null){
+                                alert("請填入教授名稱")
+                                return false;
+                            }
+                            if($("#dialogForAddTeacher #t_email").val()===null){
+                                alert("請填入教授信箱")
+                                return false;
+                            }
+                            if($("#dialogForAddTeacher #t_phone").val()===null){
+                                alert("請填入教授室內電話")
+                                return false;
+                            }
+                            if($("#dialogForAddTeacher #t_telephone").val()===null){
+                                alert("請填入教授手機電話")
+                                return false;
+                            }
+                            if($("#dialogForAddTeacher #t_service_units").val()===null){
+                                alert("請填入教授服務單位")
+                                return false;
+                            }
+
+                            $.ajax({
+                                type: "POST",
+                                url: "/admin/addNewExtraTeacher",
+                                data: {
+                                    t_name : $("#dialogForAddTeacher #t_name").val(),
+                                    t_email : $("#dialogForAddTeacher #t_email").val(),
+                                    t_phone : $("#dialogForAddTeacher #t_phone").val(),
+                                    t_telephone : $("#dialogForAddTeacher #t_telephone").val(),
+                                    t_service_units : $("#dialogForAddTeacher #t_service_units").val()
+                                },
+                                dataType: "JSON",
+                                success: function (data) {
+                                    console.log(data);
+                                    if( data.status ) {
+                                        alert( "新增成功" );
+                                    }
+                                    else {
+                                        alert( data.msg );
+                                    }
+                                    $( "#dialogForAddTeacher" ).dialog( "close" );
+                                }
+                            })
+
+
+                            
+                        }
+                    },
+                    {
+                        text: "取消",
+                        click: function() {
+                            $( this ).dialog( "close" );
+                        }
+                    }
+                ]
+            });
         });
 
     });
@@ -307,22 +379,22 @@
         }
         if (accept == 1) {
             $("#dialog-acceptChange").dialog({
-            resizable: false,
-            height: "auto",
-            width: 400,
-            modal: true,
-            buttons: {
-                "同意論文共用主題": function () {
-                    $(this).dialog("close");
-                    UpdateStudentChange(data, s_id);
-                },
-                "不同意論文共用主題": function () {
-                    data.thesis_state = 2;
-                    $(this).dialog("close");
-                    UpdateStudentChange(data, s_id);
+                resizable: false,
+                height: "auto",
+                width: 400,
+                modal: true,
+                buttons: {
+                    "同意論文共用主題": function () {
+                        $(this).dialog("close");
+                        UpdateStudentChange(data, s_id);
+                    },
+                    "不同意論文共用主題": function () {
+                        data.thesis_state = 2;
+                        $(this).dialog("close");
+                        UpdateStudentChange(data, s_id);
+                    }
                 }
-            }
-        });
+            });
         } else {
             UpdateStudentChange(data, s_id);
         }
@@ -622,11 +694,6 @@
                 <option selected="selected" value="">選擇指導教授</option>
             </select>
         </span>
-        <span>
-            <button id="dialog-link" class="ui-button ui-corner-all ui-widget">
-                <span class="ui-icon ui-icon-newwin"></span> ?
-            </button>
-        </span>
     </div>
     <div>
         <span>次要指導教授</span>
@@ -703,11 +770,6 @@
                     <option selected="selected" value="">選擇指導教授</option>
                 </select>
             </span>
-            <span>
-	            <button id="dialog-link" class="ui-button ui-corner-all ui-widget">
-		            <span class="ui-icon ui-icon-newwin"></span> ? 
-	            </button>
-            </span>
         </div>
         <div>
             <span>次要指導教授</span>
@@ -761,6 +823,34 @@
             <div>
 	            <span>次要指導教授: </span>
 	            <span></span>
+            </div>
+        </span>
+    </div>
+</div>
+
+<div id="dialogForAddTeacher" title="新增校外教授" hidden>
+    
+    <div>
+        <span>
+            <div>
+                <span>教授名稱: </span>
+                <span><input id="t_name" type="text"></span>
+            </div>
+            <div>
+                <span>教授信箱: </span>
+                <span><input id="t_email" type="email"></span>
+            </div>
+            <div>
+                <span>教授室內電話: </span>
+                <span><input id="t_phone" type="text"></span>
+            </div>
+            <div>
+                <span>教授手機電話: </span>
+                <span><input id="t_telephone" type="text"></span>
+            </div>
+            <div>
+                <span>教授服務單位: </span>
+                <span><input id="t_service_units" type="text"></span>
             </div>
         </span>
     </div>

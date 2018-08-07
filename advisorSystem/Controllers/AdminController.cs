@@ -63,6 +63,7 @@ namespace advisorSystem.Controllers
 
         public ActionResult Index()
         {
+            getRoleInfo();
 
             List<SelectListItem> items = new List<SelectListItem>();
             items.Add(new SelectListItem { Text = "請選擇", Disabled = false, Selected = true });
@@ -92,9 +93,7 @@ namespace advisorSystem.Controllers
             JToken ousSideTeacherList = commonSQL.getOusSideTeacherList();
             ViewBag.ousSideTeacherList = ousSideTeacherList.ToString(Formatting.None);
 
-
-
-            ViewBag.Message = "Link your mssql.";
+            ViewBag.adminInfo = adminInfo;
             ViewBag.Depart = "電子";
             ViewBag.User = "我";
             return View();
@@ -181,6 +180,20 @@ namespace advisorSystem.Controllers
 
             return returnValue.ToString();
         }
+
+        // POST: /admin/addNewExtraTeacher
+        [HttpPost]
+        public string addNewExtraTeacher()
+        {
+            getRoleInfo();
+            
+            JObject condi = new JObject();
+            condi["s_u_id"] = userId;
+            JObject returnValue = adminHelper.addNewExtraTeacher(Request.Form["t_name"], Request.Form["t_email"], Request.Form["t_phone"], Request.Form["t_telephone"], Request.Form["t_service_units"]);
+            
+            return returnValue.ToString();
+        }
+        
 
         public AdminController(ApplicationUserManager userManager, ApplicationSignInManager signInManager )
         {
@@ -301,16 +314,16 @@ namespace advisorSystem.Controllers
                     //update student change history
                     adminHelper.UpdateStudentChangeHistory(org_tg_id, 1, time); //state=1 means success
                     //update student apply status
-                    adminHelper.UpdateStudentApplyStatus(s_id, state: 2); 
+                    adminHelper.UpdateStudentApplyStatus(s_id, state: 0); 
                 }
             }
             else if (accept == 2)
             {
                 String time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                 //update student change history
-                adminHelper.UpdateStudentChangeHistory(org_tg_id, 2, time); //state=2 means reject
+                adminHelper.UpdateStudentChangeHistory(org_tg_id, 3, time); //state=3 means reject
                 //update student apply status
-                adminHelper.UpdateStudentApplyStatus(s_id, state: 2); 
+                adminHelper.UpdateStudentApplyStatus(s_id, state: 0);
             }
             return update_change["status"].ToString(Formatting.None);
         }

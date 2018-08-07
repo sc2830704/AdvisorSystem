@@ -151,7 +151,7 @@ namespace advisorSystem.Controllers
             {
                 String time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
                 //update student change history
-                teacherHelper.UpdateStudentChangeHistory(org_tg_id, 2, time); //state=2 means reject
+                teacherHelper.UpdateStudentChangeHistory(org_tg_id, 3, time); //state=3 means reject
                 //update student apply status
                 teacherHelper.UpdateStudentApplyStatus(s_id, state: 0);
             }
