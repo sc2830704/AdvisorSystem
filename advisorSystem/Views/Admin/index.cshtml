@@ -206,7 +206,10 @@
             var history = _studentListJSONObjs[i]['history'];
             var value='';
             for (var c in history) {
-                value += history[c]['hsc_endtime'] + history[c]['hsc_s_id'] + history[c]['in_or_out'] + '</br>';
+                if (history[c]['in_or_out']=='in')
+                    value += history[c]['hsc_starttime'] +' '+ history[c]['hsc_s_id'] + '(進)' + '</br>';
+                else
+                    value += history[c]['hsc_endtime'] +' '+ history[c]['hsc_s_id'] + '(出)' + '</br>';
             }
             newRow.push(value);
             tableStudent.row.add(newRow);
@@ -459,7 +462,11 @@
             var id = stu[i]['sid'];
             var color = stu[i]['status'] == 0 ? "red;" : "blue;";
             var foregin = id.charAt(6) == 8 ? "text-decoration:underline;":"1";
-            html += '<a href="#" style="color:' + color + foregin+'" onClick="dialogStudnetInfo(\'' + id + '\')">' + id + otherTeacher + '</a ></br>';
+            html += '<a href="#" style="color:' + color + foregin + '" onClick="dialogStudnetInfo(\'' + id + '\')">' + id + otherTeacher + '</a >';
+            console.log(stu[i]['apply_status']);
+            if (stu[i]['apply_status'] != '0') {
+                html += '<a style="color:red"><b>*</b><a></br>';
+            }
         }
         return html;
     }
