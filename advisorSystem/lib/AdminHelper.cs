@@ -156,18 +156,6 @@ namespace advisorSystem.lib
                                     , select: "(Case when sse.now_status IS NULL then '1' else sse.now_status End) as now_status , s.s_id");
 
 
-                /*returnValue = sqlHelper.select("[ntust].[teacher] t" +
-                            " JOIN ntust.teacher_group tg on tg.t_id=t.t_id" +
-                            " JOIN ntust.history_student_change hsc on hsc.hsc_origin_tg_id=tg.tg_id" +
-                            " JOIN [ntust].[pair] p on tg.tg_id=p.p_tg_id", condi
-                                    , select: "p.p_end_date, p.p_end_date , p.p_s_id");
-                if ((bool)returnValue["status"])
-                {
-                    foreach (JObject jo in returnValue["data"])
-                    {
-
-                    }
-                }*/
 
             }
 
@@ -184,10 +172,12 @@ namespace advisorSystem.lib
             condi = new JObject();
             condi["s.s_department"] = st_department;
             condi["p.p_id"] = "null";
-           returnValue = sqlHelper.select("[ntust].[student] s" +
+
+            returnValue = sqlHelper.select("[ntust].[student] s" +
                         " LEFT JOIN [ntust].[pair] p on s.s_id=p.p_s_id" +
+                        " LEFT JOIN [ntust].[student_apply_status] sas on sas.sas_s_id=s.s_id" +
                         " LEFT JOIN (SELECT max(sse_event) now_status, sse_s_id FROM [ntust].[student_state_event] GROUP BY sse_s_id) sse on sse.sse_s_id=s.s_id", condi
-                                , select: "sse.now_status, s.s_id");
+                                , select: "(Case when sse.now_status IS NULL then '1' else sse.now_status End) as now_status, s.s_id, (Case when sas.sas_type IS NULL then '0' else sas.sas_type End) as sas_type");
             if ((bool)returnValue["status"])
             {
                 foreach (JObject jo in returnValue["data"])
