@@ -88,6 +88,7 @@ namespace advisorSystem.lib
 
         public JObject select(string table, JObject dataArr, string condi="", string select="*")
         {
+            queryResult = new JObject();
             cn = new SqlConnection(connString);
             JArray data = new JArray();
             String whereCondi = "WHERE ";
@@ -121,6 +122,7 @@ namespace advisorSystem.lib
                         cn.Close();
                         queryResult["status"] = false;
                         queryResult["msg"] = "empty";
+                        queryResult["data"] = new JArray();
                         System.Diagnostics.Debug.Print(queryResult.ToString());
                         return queryResult;
                     }

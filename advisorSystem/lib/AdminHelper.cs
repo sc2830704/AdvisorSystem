@@ -148,14 +148,15 @@ namespace advisorSystem.lib
                 }
 
                 returnValue = sqlHelper.select("[ntust].[teacher] t" +
-                            " LEFT JOIN ntust.teacher_group tg on tg.t_id=t.t_id" +
-                            " JOIN [ntust].[pair] p on tg.tg_id=p.p_tg_id AND p.p_end_date IS NOT NULL" +
-                            " JOIN [ntust].[pair] p2 on p.p_s_id=p2.p_s_id AND p2.p_pair_date=p.p_end_date" +
-                            " JOIN [ntust].[student] s on s.s_id=p.p_s_id" +
-                            " LEFT JOIN (SELECT max(sse_event) now_status, sse_s_id FROM [ntust].[student_state_event] GROUP BY sse_s_id) sse on sse.sse_s_id=s.s_id", condi
-                                    , select: "(Case when sse.now_status IS NULL then '1' else sse.now_status End) as now_status , s.s_id");
-
-
+                            " JOIN ntust.teacher_group tg on tg.t_id=t.t_id" +
+                            " JOIN (SELECT p.p_tg_id, p.p_s_id, p.p_end_date,'out' as status FROM [ntust].[pair] p" +
+                                        " JOIN [ntust].[pair] p2 on p.p_s_id=p2.p_s_id AND p2.p_pair_date=p.p_end_date WHERE p.p_end_date IS NOT NULL" +//out
+                                    " UNION SELECT p2.p_tg_id, p2.p_s_id, p.p_end_date,'in' as status FROM [ntust].[pair] p" +
+                                        " JOIN [ntust].[pair] p2 on p.p_s_id=p2.p_s_id AND p2.p_pair_date=p.p_end_date WHERE p.p_end_date IS NOT NULL) out on tg.tg_id=out.p_tg_id" +
+                            " JOIN [ntust].[student] s on s.s_id=out.p_s_id", condi
+                                    , select: "s.s_name , s.s_id, out.p_end_date as datetime, out.status");
+                jt["history"] = (JToken)returnValue["data"];
+                System.Diagnostics.Debug.Print("=========================================");
 
             }
 
