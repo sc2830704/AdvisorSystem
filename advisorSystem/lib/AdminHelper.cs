@@ -154,7 +154,7 @@ namespace advisorSystem.lib
                                     " UNION SELECT p2.p_tg_id, p2.p_s_id, p.p_end_date,'in' as status FROM [ntust].[pair] p" +
                                         " JOIN [ntust].[pair] p2 on p.p_s_id=p2.p_s_id AND p2.p_pair_date=p.p_end_date WHERE p.p_end_date IS NOT NULL) out on tg.tg_id=out.p_tg_id" +
                             " JOIN [ntust].[student] s on s.s_id=out.p_s_id", condi
-                                    , select: "s.s_name , s.s_id, out.p_end_date as datetime, out.status");
+                                    , select: "s.s_name , s.s_id, out.p_end_date as datetime, out.status as in_or_out");
                 jt["history"] = (JToken)returnValue["data"];
                 System.Diagnostics.Debug.Print("=========================================");
 
