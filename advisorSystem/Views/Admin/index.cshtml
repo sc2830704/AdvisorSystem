@@ -42,11 +42,13 @@
     var _studentListJSONObjs;
     var studnetSemester;
     var dialogStudentInfo;
+    var tableMaxStudent;
     $(document).ready(function () {
         //initialize datatabke
-        generatorTable();
+        generatorStudnetTable();
         tableStudentInfo = $("#tableStudentInfo").DataTable({ searching: false, paging: false, "bInfo": false });
         tableChangeHistory = $("#tableChangeHistory").DataTable({ searching: false, paging: false, "bInfo": false });
+        tableMaxStudent = $("#tableChangeMaxStudent").DataTable({ searching: false, paging: false, "bInfo": false });
         $("[id=departmentListItem]").bind("change",function(){
             var val = $(this).val();
             var nextSelectTag = $(this).parent().next().find("select");
@@ -141,7 +143,7 @@
 
     });
     
-    function generatorTable() {
+    function generatorStudnetTable() {
         $.ajax({
             type: "POST",
             url: "/admin/GetStudentSemester",
@@ -154,7 +156,7 @@
                     { title: "教師姓名" },
                     { title: "博士班" },
                     { title: "在職" },
-                    { title: "異動紀錄." }
+                    { title: "異動紀錄" }
                 ];
                 //add dynamic semester column according to data
                 for (var i in data) {
@@ -192,7 +194,7 @@
         for (var i in _studentListJSONObjs) {
             //create row data object
             var newRow = [
-                _studentListJSONObjs[i]['tname'],
+                getMaxStudentClickEvent(_studentListJSONObjs[i]['t_id'], _studentListJSONObjs[i]['tname']),
                 getStudnetClickEvent(_studentListJSONObjs[i]['phd']),
                 getStudnetClickEvent(_studentListJSONObjs[i]['pt_m'])
             ];
@@ -212,6 +214,7 @@
                     value += history[c]['datetime'] + ' ' + history[c]['s_id'] + '(出)' + '</br>';
             }
             newRow.push(value);
+            //newRow.push(getMaxStudentClickEvent(_studentListJSONObjs[i]['t_id'], _studentListJSONObjs[i]['t_max_student_num']));
             tableStudent.row.add(newRow);
         }
         tableStudent.draw();
@@ -382,8 +385,13 @@
                         data: data,
                         dataType: "json",
                         success: function (data) {
-                            loadStudentInfo(s_id);
-                            getStudentList();
+                            console.log(data);
+                            if (data =='100') {
+                                alert("超過教授可收學生上限");
+                            } else {
+                                loadStudentInfo(s_id);
+                                getStudentList();
+                            }
                         }
                     })
                 },
@@ -430,17 +438,25 @@
         
 
     }
-    function UpdateStudentChange(data, sid) {
+    function UpdateStudentChange(data, s_id) {
         $.ajax({
             type: "POST",
             url: "/admin/UpdateStudentChange",
             data: data,
             dataType: "json",
             success: function (data) {
-                loadStudentInfo(sid);
-                getStudentList();
+                if (data == '100') {
+                    alert("超過教授可收學生上限");
+                } else {
+                    loadStudentInfo(s_id);
+                    getStudentList();
+                }
             }
         })
+    }
+    function getMaxStudentClickEvent(tid, tname) {
+        var html = '<a href="#" style="color:blue;" onClick="dialogChangeMaxStudent(\''+tid+'\', \''+ tname+'\')">' + tname + '</a >';
+        return html;
     }
     function getStudnetClickEvent(stu) {
         var html = '', otherTeacher = '';
@@ -465,9 +481,67 @@
             html += '<a href="#" style="color:' + color + foregin + '" onClick="dialogStudnetInfo(\'' + id + '\')">' + id + otherTeacher + '</a >';
             if (stu[i]['apply_status'] != '0') {
                 html += '<a style="color:red"><b>*</b><a></br>';
+            } else {
+                html += '</br>';
             }
         }
         return html;
+    }
+    function dialogChangeMaxStudent(tid, tname) {
+        $("#dialogChangeMaxStudent_info").text(tname + "教授");
+        tableMaxStudent.clear();
+        for (var i in _studentListJSONObjs) {
+            if (_studentListJSONObjs[i]["t_id"] == tid) {
+                var ms = _studentListJSONObjs[i]["max_student"];
+                for (var j in ms) {
+                    tableMaxStudent.row.add([
+                        ms[j]["ms_semester"],
+                        '<input id="m' + ms[j]["ms_semester"]+'" type="number" min="1" max="10" value=' + ms[j]["ms_max_student_num"]+'>'
+                    ]);
+                }
+                break;
+            }
+        }
+        tableMaxStudent.draw();
+        
+        $("#dialogChangeMaxStudent").dialog({
+            resizable: false,
+            height: 600,
+            width: 1000,
+            modal: true,
+            buttons: {
+                "儲存": function () {
+                    $(this).dialog("close");
+                    for (i = 0; i < tableMaxStudent.rows().data().length; i++) {
+                        var semester = tableMaxStudent.rows(i).data()[0][0];
+                        var id = 'm' + semester;
+                        var max_student = $("#" + id).val();
+                        var ms = { 'tid': tid, 'max_student_num': max_student, 'semester': semester };
+                        $.ajax({
+                            type: "post",
+                            url: "/admin/updatemaxstudent",
+                            data: ms,
+                            datatype: "json",
+                            success: function (res) {
+                                if (res) {
+                                    getStudentList();
+                                    alert('修改成功');
+                                } else if(!res)
+                                    alert('修改失敗');
+
+
+                            }
+                        })
+                    }
+                    
+                },
+                "取消": function () {
+                    $(this).dialog("close");
+                }
+            }
+        });
+
+
     }
     function dialogStudnetInfo(sid) {
         loadStudentInfo(sid);
@@ -680,6 +754,19 @@
 </h3>
 <table id="table"></table>
 <p><h5>學號紅色為休學，底線為外籍生</h5></p>
+<div id="dialogChangeMaxStudent" title="指導學生人數上限" hidden>
+    <h4><div id="dialogChangeMaxStudent_info"></div></h4>
+    <table id="tableChangeMaxStudent">
+        <thead>
+            <tr>
+                <th>學年度</th>
+                <th>學生上限</th>                
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+<div id="dialog-acceptChange" title="學生資訊" hidden>是否同意共用論文主題?</div>
 <div id="dialog-studentinfo" title="學生資訊" hidden>
 
     <p><h4><b>指導教授</b></h4></p>

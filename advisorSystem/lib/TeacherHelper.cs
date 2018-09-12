@@ -156,6 +156,25 @@ namespace advisorSystem.lib
             
         }
 
+        public int NewTeacher(string sid, string tid)
+        {
+            sqlHelper = new SQLHelper();
+            JObject dataArray = new JObject
+            {
+                ["sid"] = sid
+            };
+            String query = @"SELECT tg.t_id FROM ntust.pair as p, ntust.teacher_group as tg WHERE p.p_tg_id = tg.tg_id AND p.p_s_id = @sid AND p_end_date IS NULL";
+            
+            JObject result = sqlHelper.query(query, dataArray);
+            foreach(JObject i in result["data"])
+            {
+                string id = (String)i["t_id"];
+                if (id == tid)
+                    return 0;
+            }
+            return 1;
+        }
+
         public void UpdateStudentApplyHistory(String tg_id, int state)
         {
             sqlHelper = new SQLHelper();
@@ -412,6 +431,52 @@ namespace advisorSystem.lib
             String query = "UPDATE sas set sas_type="+state+ " FROM ntust.student_apply_status AS sas WHERE sas_s_id='" + s_id+"'";
             JObject applyStatus = sqlHelper.select(query);
             return applyStatus;
+        }
+        public int GetCurrentStudentNum(string tid, string sid)
+        {
+            sqlHelper = new SQLHelper();
+            JObject dataArray = new JObject
+            {
+                ["tid"] = tid
+            };
+            String queryString = "SELECT p.p_s_Id FROM ntust.pair  as p, " +
+                "ntust.teacher_group as tg WHERE p.p_end_date IS NULL " +
+                "AND tg.tg_id=p.p_tg_id AND tg.t_id=@tid";
+            JObject student = sqlHelper.query(queryString, dataArray);
+            int count = 0;
+            foreach (JObject i in student["data"])
+            {
+                //System.Diagnostics.Debug.Print();
+                String p_sid = (String)i["p_s_Id"];
+                //略過外籍生與在職生
+                if (p_sid[6] == '8' || p_sid[6] == '9')
+                {
+                    continue;
+                }
+                if (p_sid.Substring(0, 3).Equals(sid.Substring(0, 3)))
+                {
+                    count++;
+                }
+                //System.Diagnostics.Debug.Print((String)p_sid.Substring(1, 4));
+
+            }
+
+
+            return count;
+        }
+        public int GetMaxStudentNum(string tid, string sid)
+        {
+            sqlHelper = new SQLHelper();
+            string semester = sid.Substring(1, 3);
+            JObject dataArray = new JObject
+            {
+                ["t_id"] = tid,
+                ["semester"] = semester
+            };
+            String queryString = @"SELECT ms.ms_max_student_num FROM ntust.max_student as ms WHERE ms.ms_t_id=@t_id AND ms.ms_semester =@semester";
+            JObject res = sqlHelper.query(queryString, dataArray);
+
+            return Convert.ToInt32(res["data"][0]["ms_max_student_num"]);
         }
     }
     

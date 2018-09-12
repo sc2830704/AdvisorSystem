@@ -518,6 +518,7 @@ namespace advisorSystem.lib
         public JObject query(String queryStr, JObject dataArray)
         {
             JArray data = new JArray();
+            cn = new SqlConnection(connString);
             queryResult = new JObject();
             try
             {

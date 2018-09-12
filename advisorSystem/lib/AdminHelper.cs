@@ -156,6 +156,14 @@ namespace advisorSystem.lib
                             " JOIN [ntust].[student] s on s.s_id=out.p_s_id", condi
                                     , select: "s.s_name , s.s_id, out.p_end_date as datetime, out.status as in_or_out");
                 jt["history"] = (JToken)returnValue["data"];
+                //Get max student by teacher
+                JObject dataArray = new JObject
+                {
+                    ["tid"] = jt["t_id"]
+                };
+                String queryString = "SELECT * from ntust.max_student as ms WHERE ms.ms_t_id=@tid";
+                returnValue = sqlHelper.query(queryString, dataArray);
+                jt["max_student"] = (JToken)returnValue["data"];
                 System.Diagnostics.Debug.Print("=========================================");
 
             }
@@ -201,6 +209,8 @@ namespace advisorSystem.lib
                 }
             }
             noTeacherStudent["tname"] = "無人認養";
+            noTeacherStudent["max_student"] = "";
+            
 
             returnJT.Add(noTeacherStudent);
 
@@ -208,6 +218,10 @@ namespace advisorSystem.lib
 
 
         }
+
+        
+
+        
 
         public JObject getStudentInfo(string s_id)
         {
@@ -366,7 +380,6 @@ namespace advisorSystem.lib
                             "ntust.student_apply sa " +
                             "WHERE sa.sa_tg_id =@sa_tg_id AND sa.sa_state != 1 ";
             JObject updateStatus = sqlHelper.query(queryString, dataArray);
-            JArray array = (JArray)updateStatus.GetValue("data");
             return Convert.ToInt32(updateStatus["data"][0]["count"]);
         }
         public JObject AddApplyPair(String tg_id, String s_id)
@@ -550,13 +563,92 @@ namespace advisorSystem.lib
             JObject res = sqlHelper.insert(table, condi);
             return res;
         }
+        
+        public int GetMaxStudentNum(string tid, string sid)
+        {
+            sqlHelper = new SQLHelper();
+            string semester = sid.Substring(1, 3);
+            JObject dataArray = new JObject
+            {
+                ["t_id"] = tid,
+                ["semester"] = semester
+            };
+            String queryString = @"SELECT ms.ms_max_student_num FROM ntust.max_student as ms WHERE ms.ms_t_id=@t_id AND ms.ms_semester =@semester";
+            JObject res = sqlHelper.query(queryString, dataArray);
 
+            return Convert.ToInt32(res["data"][0]["ms_max_student_num"]);
+        }
+        internal JObject UpdateMaxStudent(string tid, int max_student_num, string semester)
+        {
+            sqlHelper = new SQLHelper();
+            JObject dataArray = new JObject
+            {
+                ["max_student_num"] = max_student_num,
+                ["tid"] = tid,
+                ["semester"] = semester
+            };
+            String queryString = "UPDATE ms set ms.ms_max_student_num=@max_student_num " +
+                "FROM ntust.max_student as ms WHERE ms.ms_t_id=@tid AND ms.ms_semester=@semester";
+            JObject updateStatus = sqlHelper.query(queryString, dataArray);
+            return updateStatus;
+        }
+        public int GetCurrentStudentNum(string tid, string sid)
+        {
+            sqlHelper = new SQLHelper();
+            JObject dataArray = new JObject
+            {
+                ["tid"] = tid
+            };
+            String queryString = "SELECT p.p_s_Id FROM ntust.pair  as p, " +
+                "ntust.teacher_group as tg WHERE p.p_end_date IS NULL " +
+                "AND tg.tg_id=p.p_tg_id AND tg.t_id=@tid";
+            JObject student = sqlHelper.query(queryString, dataArray);
+            int count = 0;
+            foreach (JObject i in student["data"])
+            {
+                //System.Diagnostics.Debug.Print();
+                String p_sid = (String)i["p_s_Id"];
+                //略過外籍生與在職生
+                if (p_sid[6] == '8' || p_sid[6] == '9')
+                {
+                    continue;
+                }
+                if (p_sid.Substring(0, 3).Equals(sid.Substring(0, 3)))
+                {
+                    count++;
+                }
+                //System.Diagnostics.Debug.Print((String)p_sid.Substring(1, 4));
+
+            }
+
+
+            return count;
+        }
         private static Random random = new Random();
         public static string RandomString(int length)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string(Enumerable.Repeat(chars, length)
               .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+        public int IsNewTeacher(string sid, string tid)
+        {
+            //return 1 means this student is applying change to teacher
+            sqlHelper = new SQLHelper();
+            JObject dataArray = new JObject
+            {
+                ["sid"] = sid
+            };
+            String query = @"SELECT tg.t_id FROM ntust.pair as p, ntust.teacher_group as tg WHERE p.p_tg_id = tg.tg_id AND p.p_s_id = @sid AND p_end_date IS NULL";
+
+            JObject result = sqlHelper.query(query, dataArray);
+            foreach (JObject i in result["data"])
+            {
+                string id = (String)i["t_id"];
+                if (id == sid)
+                    return 0;
+            }
+            return 1;
         }
     }
 }

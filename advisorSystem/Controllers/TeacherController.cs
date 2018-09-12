@@ -94,6 +94,10 @@ namespace advisorSystem.Controllers
         public String UpdateStudentApply(String tg_id, String s_id, int accept)
         {
             getRoleInfo();
+            int max_student = teacherHelper.GetMaxStudentNum(tid, s_id);//取得老師可指導學生上限
+            int current_student = teacherHelper.GetCurrentStudentNum(tid, s_id);//取得目前學生
+            if (current_student >= max_student & accept==1)
+                return "100";
             JObject update_apply = teacherHelper.UpdateApply(tg_id, accept);
 
             if (accept == 1)
@@ -121,6 +125,12 @@ namespace advisorSystem.Controllers
         {
             getRoleInfo();
 
+            int max_student = teacherHelper.GetMaxStudentNum(tid, s_id);//取得老師可指導學生上限
+            int current_student = teacherHelper.GetCurrentStudentNum(tid, s_id);//取得目前學生
+            int i = teacherHelper.NewTeacher(s_id, t_id);//如果是新老師則需要補正
+
+            if (current_student >= max_student+i & accept == 1)
+                return "100";
             //update teacher accpet according to allapprove
             JObject update_change = teacherHelper.UpdateChange(org_tg_id, tg_id, s_id, t_id, thesis_state, sc_allapproval, accept);
             

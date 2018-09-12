@@ -245,10 +245,14 @@
                         data: data,
                         dataType: "json",
                         success: function (data) {
-                            console.log(data);
-                            getStudentApply();
-                            getStudent();
-                            getStudentApplyHistory();
+                            if (data == '100') {
+                                alert("超過教授可收學生上限");
+                            } else {
+                                console.log(data);
+                                getStudentApply();
+                                getStudent();
+                                getStudentApplyHistory();
+                            }
                         }
                     })
                 },
@@ -304,9 +308,13 @@
             data: data,
             dataType: "json",
             success: function (data) {
-                console.log(data);
-                getStudentChange();
-                getStudent();
+                if (data == '100') {
+                    alert("超過教授可收學生上限");
+                } else {
+                    console.log(data);
+                    getStudentChange();
+                    getStudent();
+                }
             }
         })
     }

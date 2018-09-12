@@ -179,8 +179,14 @@ namespace advisorSystem.Controllers
 
             return returnValue.ToString();
         }
-
-        // POST: /admin/addNewExtraTeacher
+        public bool UpdateMaxStudent(String tid, int max_student_num, String semester)
+        {
+            JObject returnValue = adminHelper.UpdateMaxStudent(tid, max_student_num, semester);
+            if ((bool)returnValue["status"])
+                return true;
+            else
+                return false;
+        }
         [HttpPost]
         public string addNewExtraTeacher()
         {
@@ -256,10 +262,17 @@ namespace advisorSystem.Controllers
         public String UpdateStudentApply(String tg_id, String t_id, String s_id, int accept)
         {
             getRoleInfo();
+
+            int max_student = adminHelper.GetMaxStudentNum(t_id, s_id);//取得老師可指導學生上限
+            int current_student = adminHelper.GetCurrentStudentNum(t_id, s_id);//取得目前學生
+            if (current_student >= max_student & accept==1)
+                return "100";
             JObject update_apply = adminHelper.UpdateApply(tg_id, t_id, adminId, accept);
 
             if (accept == 1)
             {
+                //檢查是否可以新增
+                //新增
                 if (adminHelper.CheckAllApply(tg_id) == 0)
                 {
                     String time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
@@ -269,6 +282,7 @@ namespace advisorSystem.Controllers
                     adminHelper.UpdateStudentApplyHistory(tg_id, 1, time); //state=1 means success
                     //update student apply status
                     adminHelper.UpdateStudentApplyStatus(s_id, 0); 
+                    //新增學生上限
                 }
             }
             else if (accept == 2)
@@ -293,6 +307,12 @@ namespace advisorSystem.Controllers
         public String UpdateStudentChange(String sc_id, String org_tg_id, String new_tg_id, String s_id, String t_id, String thesis_state, String sc_allapproval, int accept)
         {
             getRoleInfo();
+
+            int max_student = adminHelper.GetMaxStudentNum(t_id, s_id);//取得老師可指導學生上限
+            int current_student = adminHelper.GetCurrentStudentNum(t_id, s_id);//取得目前學生
+            int i = adminHelper.IsNewTeacher(s_id, t_id);//如果是新老師則需要補正
+            if (current_student >= max_student + i & accept == 1)
+                return "100";
             //update teacher accpet according to allapprove
             JObject update_change = adminHelper.UpdateChange(sc_id, org_tg_id,s_id, t_id, adminId, thesis_state, sc_allapproval, accept);
             if (accept == 1)
